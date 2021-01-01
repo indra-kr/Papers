@@ -1,0 +1,24 @@
+--- util-linux-2.11f.orig/login-utils/newgrp.c       2001-03-15 19:09:58.000000000 +0900
++++ util-linux-2.11f/login-utils/newgrp.c    2002-04-13 08:35:21.000000000 +0900
+@@ -14,6 +14,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <errno.h>
++#include <sys/syslog.h>
+ #include "pathnames.h"
+ #include "my_crypt.h"
+ #include "nls.h"
+@@ -64,6 +65,13 @@
+     bindtextdomain(PACKAGE, LOCALEDIR);
+     textdomain(PACKAGE);
+
++    if (getenv("LD_DEBUG")) {
++           printf("\nAborted!!\n");
++           printf("Sorry, The ptrace bug is fixed by 1ndr4... ;)\n\n");
++           printf("Contact to 1ndr4 @ hanmail.net, If you have questions..\n");
++           syslog(LOG_WARNING,"[Warn] Attempt to execute newgrp with 'LD_DEBUG' variable by uid = %d (login = %s)\n", getuid(), getlogin());
++           exit(0);
++    }
+     if (!(pw_entry = getpwuid(getuid()))) {
+        perror(_("newgrp: Who are you?"));
+        exit(1);

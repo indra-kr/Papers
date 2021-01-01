@@ -1,0 +1,405 @@
+                                        - MSN Messenger connection by PHP -
+
+                                                                                       indra(1ndr4@hanmail.net)
+
+OS: Windows XP
+Program: Commview (Packet Analyzer)
+MSN Server IP: 207.46.106.139
+MSN Port: 1863
+
+MSN login 상황 및 packet analyze 를 하기 위해
+windows OS 에서의 packet analyzer Commview 라는 tool 을 사용.
+
+1. 로그인 상황.
+
+1.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 4C AF 14 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .L@......=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F2 F5 C6 36 31 F3 50 18   j?|.G讚質?1?.
+0x0030   FA F0 C2 01 00 00 56 45-52 20 31 20 4D 53 4E 50   協?..VER 1 MSNP
+0x0040   37 20 4D 53 4E 50 36 20-4D 53 4E 50 35 20 4D 53   7 MSNP6 MSNP5 MS
+0x0050   4E 50 34 20 43 56 52 30-0D 0A                     NP4 CVR0..
+
+1.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 4C 82 C5 00 00 34 06-42 24 CF 2E 6A 8B 3D 66   .L~B?.4.B$?j?f
+0x0020   4A A3 07 47 13 7C C6 36-31 F3 F3 C6 F3 19 50 18   J?G.|?1寨폐.P.
+0x0030   44 4C EE A5 00 00 56 45-52 20 31 20 4D 53 4E 50   DL宰..VER 1 MSNP
+0x0040   37 20 4D 53 4E 50 36 20-4D 53 4E 50 35 20 4D 53   7 MSNP6 MSNP5 MS
+0x0050   4E 50 34 20 43 56 52 30-0D 0A                     NP4 CVR0..
+
+2.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 2F AF 15 40 00 80 06-00 00 3D 66 4A A3 CF 2E   ./?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 19 C6 36 32 17 50 18   j?|.G讚??2.P.
+0x0030   FA CC C1 E4 00 00 49 4E-46 20 32 0D 0A            獻쥑..INF 2..
+
+2.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 33 83 2E 00 00 34 06-41 D4 CF 2E 6A 8B 3D 66   .3?..4.A冬.j?f
+0x0020   4A A3 07 47 13 7C C6 36-32 17 F3 C6 F3 20 50 18   J?G.|?2.讚?P.
+0x0030   44 45 61 E0 00 00 49 4E-46 20 32 20 4D 44 35 0D   DEa?.INF 2 MD5.
+0x0040   0A                                                .
+
+3.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 49 AF 16 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .I?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 20 C6 36 32 22 50 18   j?|.G讚??2"P.
+0x0030   FA C1 C1 FE 00 00 55 53-52 20 33 20 4D 44 35 20   鄕짓..USR 3 MD5
+0x0040   49 20 69 6E 64 72 61 40-67 6E 75 68 61 63 6B 65   I indra@gnuhacke
+0x0050   72 2E 63 6F 6D 0D 0A                              r.com..
+
+3.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 46 84 76 00 00 34 06-40 79 CF 2E 6A 8B 3D 66   .F~Dv..4.@y?j?f
+0x0020   4A A3 07 47 13 7C C6 36-32 22 F3 C6 F3 41 50 18   J?G.|?2"讚?P.
+0x0030   44 24 55 DF 00 00 55 53-52 20 33 20 4D 44 35 20   D$U?.USR 3 MD5
+0x0040   53 20 31 30 34 38 38 35-39 36 37 37 2E 32 30 30   S 1048859677.200
+0x0050   30 33 0D 0A                                       03..
+
+4.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 56 AF 18 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .V?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 41 C6 36 32 40 50 18   j?|.G讚??2@P.
+0x0030   FA A3 C2 0B 00 00 55 53-52 20 34 20 4D 44 35 20   項?..USR 4 MD5
+0x0040   53 20 ** ** ** ** ** **-** ** ** ** ** ** ** **   S **************
+0x0050   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **   ****************
+0x0060   ** ** 0D 0A                                       **..
+
+※ * 로 처리된 부분은 MD5 로 암호화 된 password + hash 값.
+
+4.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 E9 86 7A 00 00 34 06-3D D2 CF 2E 6A 8B 3D 66   .?z..4.=碌.j?f
+0x0020   4A A3 07 47 13 7C C6 36-32 40 F3 C6 F3 6F 50 18   J?G.|?2@讚?P.
+0x0030   43 F6 AC DD 00 00 55 53-52 20 34 20 4F 4B 20 69   C趣?.USR 4 OK i
+0x0040   6E 64 72 61 40 67 6E 75-68 61 63 6B 65 72 2E 63   ndra@gnuhacker.c
+0x0050   6F 6D 20 5B 4E 4F 25 32-30 57 41 52 5D 25 32 30   om [NO%20WAR]%20
+0x0060   5B 69 6E 64 72 61 5D 25-32 30 28 25 32 30 EC 94   [indra]%20(%20?
+0x0070   A8 EB B0 95 2E 2E 2E 25-32 30 EC BB A4 EB 84 90   ⑤?U...%20而ㅻ~D~P
+0x0080   ED 8C A8 EC B9 98 25 32-30 EC 95 88 ED 95 A0 EA   ?⑥?X%20?~H?U| ?
+0x0090   BA BC EB AC B8 25 32 30-2F 73 62 69 6E 2F 69 6E   볼臾?20/sbin/in
+0x00A0   73 6D 6F 64 25 32 30 EB-9D BC EB 8F 84 25 32 30   smod%20?쇰~O~D%20
+0x00B0   EC 8B A4 ED 96 89 ED 8D-BC EB AF B8 EC 85 98 25   ?ㅽ~V~I?쇰???
+0x00C0   32 30 EB A7 89 EC 95 84-21 21 25 32 30 2D 5F 2D   20留~I?U~D!!%20-_-
+0x00D0   5E 25 32 30 29 25 32 30-5B 5B 25 32 30 69 6E 64   ^%20)%20[[%20ind
+0x00E0   72 61 2E 6B 61 6C 61 64-61 73 2E 63 6F 6D 25 32   ra.kaladas.com%2
+0x00F0   30 5D 5D 20 31 0D 0A                              0]] 1..
+
+4.3 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   01 F7 86 7B 00 00 34 06-3C C3 CF 2E 6A 8B 3D 66   .?{..4.<촙.j?f
+0x0020   4A A3 07 47 13 7C C6 36-33 01 F3 C6 F3 6F 50 18   J?G.|?3.讚?P.
+0x0030   43 F6 1C 75 00 00 4D 53-47 20 48 6F 74 6D 61 69   C?u..MSG Hotmai
+0x0040   6C 20 48 6F 74 6D 61 69-6C 20 34 33 38 0D 0A 4D   l Hotmail 438..M
+0x0050   49 4D 45 2D 56 65 72 73-69 6F 6E 3A 20 31 2E 30   IME-Version: 1.0
+0x0060   0D 0A 43 6F 6E 74 65 6E-74 2D 54 79 70 65 3A 20   ..Content-Type:
+0x0070   74 65 78 74 2F 78 2D 6D-73 6D 73 67 73 70 72 6F   text/x-msmsgspro
+0x0080   66 69 6C 65 3B 20 63 68-61 72 73 65 74 3D 55 54   file; charset=UT
+0x0090   46 2D 38 0D 0A 4C 6F 67-69 6E 54 69 6D 65 3A 20   F-8..LoginTime:
+........
+
+5.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 35 AF 1A 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .5?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 6F C6 36 34 D0 50 18   j?|.G讚??4?.
+0x0030   F8 13 C1 EA 00 00 53 59-4E 20 35 20 37 37 34 34   ?쥬..SYN 5 7744
+0x0040   30 0D 0A                                          0..
+
+5.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 35 89 8C 00 00 34 06-3B 74 CF 2E 6A 8B 3D 66   .5~I~L..4.;t?j?f
+0x0020   4A A3 07 47 13 7C C6 36-34 D0 F3 C6 F3 7C 50 18   J?G.|?4夔폐|P.
+0x0030   43 E9 30 F3 00 00 53 59-4E 20 35 20 37 37 34 34   C??.SYN 5 7744
+0x0040   30 0D 0A                                          0..
+
+6.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 33 AF 1B 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .3?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 7C C6 36 34 DD 50 18   j?|.G讚??4?.
+0x0030   F8 06 C1 E8 00 00 43 48-47 20 36 20 4E 4C 4E 0D   ?쥡..CHG 6 NLN.
+0x0040   0A                                                .
+
+7.1 - My ip -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 66 AF 1C 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .f?@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 87 C6 36 34 DD 50 18   j?|.G讚??4?.
+0x0030   F8 06 C2 1B 00 00 43 56-52 20 37 20 30 78 30 34   ??..CVR 7 0x04
+0x0040   31 32 20 77 69 6E 6E 74-20 35 2E 31 20 69 33 38   12 winnt 5.1 i38
+0x0050   36 20 4D 53 4D 53 47 53-20 34 2E 37 2E 30 31 30   6 MSMSGS 4.7.010
+0x0060   35 20 57 69 6E 64 6F 77-73 4D 65 73 73 65 6E 67   5 WindowsMesseng
+0x0070   65 72 0D 0A                                       er..
+
+6.2 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 33 89 DB 00 00 34 06-3B 27 CF 2E 6A 8B 3D 66   .3~I?.4.;'?j?f
+0x0020   4A A3 07 47 13 7C C6 36-34 DD F3 C6 F3 87 50 18   J?G.|?4沸폐~GP.
+0x0030   43 DE 46 18 00 00 43 48-47 20 36 20 4E 4C 4E 0D   C?...CHG 6 NLN.
+0x0040   0A                                                .
+
+6.3 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   01 35 8A DB 00 00 34 06-39 25 CF 2E 6A 8B 3D 66   .5~J?.4.9%?j?f
+0x0020   4A A3 07 47 13 7C C6 36-3B 55 F3 C6 F3 87 50 18   J?G.|?;U讚?P.
+0x0030   43 DE 95 D0 00 00 95 88-EC 9E AC EB AA A8 2D 0D   C??.~U~H?щえ-.
+0x0040   0A 49 4C 4E 20 36 20 4E-4C 4E 20 ** ** ** ** **   .ILN 6 NLN *****
+0x0050   ** ** ** ** ** ** 40 68-6F 74 6D 61 69 6C 2E 63   ******@hotmail.c
+0x0060   6F 6D 20 5B 4E 6F 76 61-5D 25 32 30 2D 25 32 30   om [Nova]%20-%20
+0x0070   6E 6F 76 61 2E 72 65 61-6C 73 6B 75 6C 6C 73 2E   nova.realskulls.
+0x0080   6F 72 67 0D 0A                                    org..
+
+6.4 - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   02 40 8A D8 00 00 34 06-38 1D CF 2E 6A 8B 3D 66   .@~J?.4.8.?j?f
+0x0020   4A A3 07 47 13 7C C6 36-35 0D F3 C6 F3 87 50 10   J?G.|?5.讚?P.
+0x0030   43 DE 64 A3 00 00 49 4C-4E 20 36 20 4E 4C 4E 20   C??.ILN 6 NLN
+0x0040   ** ** ** ** ** ** ** **-** 40 68 6F 74 6D 61 69   *********@hotmai
+0x0050   6C 2E 63 6F 6D 20 ** **-** ** ** ** ** ** 25 32   l.com ********%2
+0x0060   30 2D 25 32 30 6C 61 7A-79 61 6E 74 2E 6E 65 74   0-%20lazyant.net
+0x0070   0D 0A 49 4C 4E 20 36 20-4E 4C 4E 20 ** ** ** **   ..ILN 6 NLN ****
+0x0080   40 63 6D 64 6C 69 6E 65-2E 6F 72 67 20 EF A7 AA   @cmdline.org 筌
+.........
+0x0210   20 5B EB A7 8C EC 89 90-5D 0D 0A 43 56 52 20 37    [留~L?I~P]..CVR 7
+0x0220   20 34 2E 37 2E 30 31 30-35 20 34 2E 37 2E 30 31    4.7.0105 4.7.01
+0x0230   30 35 20 31 2E 30 2E 30-30 30 30 20 68 74 74 70   05 1.0.0000 http
+0x0240   3A 2F 2F 64 6F 77 6E 6C-6F 61 64 2E 6D 69         ://download.mi
+(connect)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 91 8B 8C 00 00 34 06-39 18 CF 2E 6A 8B 3D 66   .~Q~K?.4.9.?j?f
+0x0020   4A A3 07 47 13 7C C6 36-44 1B F3 C6 F3 C5 50 18   J?G.|?D.讚纘P.
+0x0030   43 A0 91 D7 00 00 63 72-6F 73 6F 66 74 2E 63 6F   C| ~Q?.crosoft.co
+0x0040   6D 2F 64 6F 77 6E 6C 6F-61 64 2F 77 69 6E 64 6F   m/download/windo
+0x0050   77 73 6D 65 73 73 65 6E-67 65 72 2F 69 6E 73 74   wsmessenger/inst
+0x0060   61 6C 6C 2F 34 2E 37 2F-77 78 70 2F 6B 6F 2F 6D   all/4.7/wxp/ko/m
+0x0070   6D 73 73 65 74 75 70 2E-65 78 65 20 68 74 74 70   mssetup.exe http
+0x0080   3A 2F 2F 6D 65 73 73 65-6E 67 65 72 2E 6D 69 63   ://messenger.mic
+0x0090   72 6F 73 6F 66 74 2E 63-6F 6D 2F 6B 6F 0D 0A      rosoft.com/ko..
+
+?.? - My IP <- MSN (Recv)
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 44 25 72 00 00 34 06-9F 7F CF 2E 6A 8B 3D 66   .D%r..4.??j?f
+0x0020   4A A3 07 47 13 7C C6 36-44 84 F3 C6 F3 C5 50 18   J?G.|?D~D讚纘P.
+0x0030   43 A0 C3 A3 00 00 43 48-4C 20 30 20 32 31 33 34   C| ?.CHL 0 2134
+0x0040   31 36 35 31 38 31 36 32-39 37 30 38 32 34 37 38   1651816297082478
+0x0050   0D 0A                                             ..
+
+8.1 - My IP -> MSN (Send)
+0x0000   00 09 12 87 40 54 00 01-02 93 3C C9 08 00 45 00   ...?T...??.E.
+0x0010   00 63 AF 45 40 00 80 06-00 00 3D 66 4A A3 CF 2E   .c츲@.....=fJＯ.
+0x0020   6A 8B 13 7C 07 47 F3 C6-F3 C5 C6 36 44 A0 50 18   j?|.G讚纘?D| P.
+0x0030   F8 53 C2 18 00 00 51 52-59 20 38 20 50 52 4F 44   ??..QRY 8 PROD
+0x0040   30 30 33 39 45 33 56 47-4D 25 47 42 20 33 32 0D   0039E3VGM%GB 32.
+0x0050   0A 61 39 36 34 62 34 61-34 64 37 66 63 35 64 62   .a964b4a4d7fc5db
+0x0060   38 66 38 32 30 63 63 35-37 31 33 33 35 35 33 66   8f820cc57133553f
+0x0070   61                                                a
+
+8.2
+0x0000   00 01 02 93 3C C9 00 09-12 87 40 54 08 00 45 00   ...??..?T..E.
+0x0010   00 2F 26 5A 00 00 34 06-9E AC CF 2E 6A 8B 3D 66   ./&Z..4.~^?j?f
+0x0020   4A A3 07 47 13 7C C6 36-44 A0 F3 C6 F4 00 50 18   J?G.|?D| 讚?P.
+0x0030   43 65 B0 BB 00 00 51 52-59 20 38 0D 0A            Ce갱..QRY 8..
+
+-------------------------------------------------------------------[ msn.php ]
+
+<?
+/*
+** msn.php
+*/
+function GetStr($head, $num, $msg)
+{
+	include "./user.php";
+	
+	if($head == "VER") 
+		return "VER $num MSNP7 MSNP6 MSNP5 MSNP4 CVR0\r\n";
+	
+	if($head == "INF") 
+		return "INF $num\r\n";
+
+	if($head == "USR_ID") 
+		return "USR $num MD5 I $user\r\n";
+
+	if($head == "USR_PWD") {
+		/*
+		** message 전부를 그대로 받아 parsing 하여, 
+		** hash 값을 얻은 후 전송될 packet 을 만든다.
+		*/
+		$tmp = explode(" ", $msg);
+		$hash = $tmp[4];
+
+		/* \r\n 의 2bytes 처리 */
+		$hash = substr($hash, 0, strlen($hash)-2);
+		
+		/* hash + password */
+		$tmp = $hash . $pass;
+	
+		/* Encryption */
+		$enc_pass = md5($tmp);
+		
+		return "USR $num MD5 S $enc_pass\r\n";
+	}
+
+	if($head == "CHG")
+		return "CHG $num NLN\r\n";
+	if($head == "XFR")
+		return "XFR $num SB\r\n";
+	if($head == "USR_CKI")
+		return "USR $num $user $msg\r\n";
+	if($head == "CAL")
+		return "CAL $num $msg\r\n";
+}
+
+function UserChk($s_fd, $msn_id)
+{
+	$size = "1024";
+
+	$h_str = "VER:INF:USR_ID:USR_PWD:CHG:XFR:USR_CKI:CAL";
+
+	/*
+	** 인증단계
+	*/	
+	for($t_id = 0; $t_id < 5; $t_id++) {
+		$hdr = explode(":", $h_str);
+		
+		if($hdr[$t_id] == "USR_PWD")
+			$s_msg = GetStr($hdr[$t_id], $t_id, $result);
+		else
+			$s_msg = GetStr($hdr[$t_id], $t_id, 0);
+
+		echo "[Send] $s_msg\r\n<BR>";
+		fputs($s_fd, $s_msg);
+		$result = fgets($s_fd, $size);
+		echo "[Recv] $result\r\n<BR>";
+	}
+
+	while(1) {
+		$result = fgets($s_fd, $size);
+		if(strncmp($result, $hdr[$t_id-1], 3) == 0) break;
+	}
+
+	echo "[Recv] $result\r\n<BR>";
+
+	/*
+	** XFR header packet
+	*/
+	$s_msg = GetStr($hdr[$t_id], $t_id, 0);
+	echo "[Send] $s_msg\r\n<BR>";
+	fputs($s_fd, $s_msg);
+	$result = fgets($s_fd, $size);
+	echo "[Recv] $result\r\n<BR>";
+	$t_id++;
+
+	/* Get the CKI key */
+	$tmp = explode(" ", $result);
+	$cki = $tmp[5];
+
+	/* Get the IP & Port */
+	$t_idpnport = $tmp[3];
+	$tmp = explode(":", $t_idpnport);
+	$xfr_ip = $tmp[0];
+	$xfr_port = $tmp[1];
+	
+	/*
+	** Create other socket.
+	*/ 
+	$s_fd2 = fsockopen($xfr_ip, $xfr_port);
+	if(!$s_fd2) {
+		echo "Coule not create other socket.\r\n<BR>";
+		exit;
+	}
+
+	/* trial-id using for other socket */	
+	$t_id2 = 0;
+
+	$s_msg = GetStr($hdr[$t_id], $t_id2, $cki);
+	echo "[Send] $s_msg\r\n<BR>";
+	fputs($s_fd2, $s_msg);
+	$result = fgets($s_fd2, $size);
+	echo "[Recv] $result\r\n<BR>";
+	$t_id++;
+	$t_id2++;
+
+	/*
+	** CAL header packet.
+	*/
+	$s_msg = GetStr($hdr[$t_id], $t_id2, $msn_id);
+	echo "[Send] $s_msg\r\n<BR>";
+	fputs($s_fd2, $s_msg);
+	$result = fgets($s_fd2, $size);
+	if(ereg("^217", $result)) {
+		echo "[Recv] $result\r\n<BR>";
+		fclose($s_fd2);
+		return -1;
+	}
+	else {
+		echo "[Recv] $result\r\n<BR>";
+		fclose($s_fd2);
+		return 1;
+	}
+}
+	/* main */
+	$who = "indra@gnuhacker.com";
+
+	$server = "207.46.106.139";
+	$port = "1863";
+
+	$sock = fsockopen($server, $port);
+
+	/* socket open failed */
+	if(!$sock) {
+		echo "Could not connect to $server.\r\n<BR>";
+		exit;
+	}
+	
+	if(UserChk($sock, $who) < 0) {
+		fclose($sock);
+		echo "$who (오프라인)\r\n<BR>";
+	}
+	else {
+		fclose($sock);
+		echo "$who (온라인)\r\n<BR>";
+	}
+?>
+-------------------------------------------------------------------[ msn.php ]
+
+-------------------------------------------------------------------[ user.php ]
+<?
+/* 
+** user.php 
+*/
+        $user = {MSN_ID};
+        $pass = {MSN_PASSWORD};
+?>
+-------------------------------------------------------------------[ user.php ]
+
+user.php 에는 임의의 MSN 계정을 만들어 정보를 저장한다.
+웹호스팅 서버처럼 내부 쉘 계정이 많은 서버라면,
+내부 다른계정 이용자에 의해 쉘에서 절대경로의 입력으로
+user.php 내용을 볼수 있으므로 누군가 보더라도 그리고 그 비밀번호를 바꾸더라도
+부담없이 다른 계정을 만들수 있을 정도의 임의의 ID 와 패스워드를 만들어 저장한다.
+
+-- Result --
+
+[Send] VER 0 MSNP7 MSNP6 MSNP5 MSNP4 CVR0 
+[Recv] VER 0 MSNP7 MSNP6 MSNP5 MSNP4 CVR0 
+[Send] INF 1 
+[Recv] INF 1 MD5 
+[Send] USR 2 MD5 I {임의의 MSN 계정} 
+[Recv] USR 2 MD5 S 1049022572.9621 
+[Send] USR 3 MD5 S ******************************** (md5) 
+[Recv] USR 3 OK {임의의 MSN 계정} {MSN 닉네임} 1 
+[Send] CHG 4 NLN 
+[Recv] MSG Hotmail Hotmail 442 
+[Recv] CHG 4 NLN 
+[Send] XFR 5 SB 
+[Recv] XFR 5 SB 207.46.108.13:1863 CKI 685603.1049022573.3819 
+[Send] USR 0 {임의의 MSN 계정} 685603.1049022573.3819 
+[Recv] USR 0 OK {임의의 MSN 계정} {MSN 닉네임} 
+[Send] CAL 1 indra@gnuhacker.com 
+[Recv] CAL 1 RINGING 685603 
+indra@gnuhacker.com (온라인) 
+
+- 참고한 문서 -
+
+http://www.venkydude.com/articles/msn2.htm
+http://www.tlsecurity.net/Textware/Misc/draft-movva-msn-messenger-protocol-00.txt
+

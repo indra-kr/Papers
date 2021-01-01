@@ -1,0 +1,203 @@
+                               - SunOS 에서의 동적메모리 할당 문제 -
+                                                               
+                                                                     indra(1ndr4@hanmail.net)
+
+-------------------------------- [ test_code.c ]
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX     (1024*1024)*1024
+#define ALERT(funct, funct2, line) { \
+        printf("Executed %s function. (in %s function. %d line)\n", \
+        funct, funct2, line); \
+}
+
+int main()
+{
+        char *buf;
+
+        sleep(5);
+        ALERT("malloc", __FUNCTION__, __LINE__);
+        buf = (char*)malloc(MAX);
+        sleep(5);
+        ALERT("free", __FUNCTION__, __LINE__);
+        free(buf);
+        sleep(5);
+        ALERT("exit", __FUNCTION__, __LINE__);
+        exit(0);
+}
+
+-------------------------------- [ test_code.c ]
+
+OS 환경은 SunOS 5.8 i86 이며, 
+사양은 320 RAM, intel Pentium 3 800, LG IBM 노트북, 
+컴파일러는 GNU gcc 버전 2.95(20010315 release) 버전이다.
+
+bash-2.03# uname -a; gcc -v
+SunOS indra 5.8 Generic_108529-16 i86pc i386 i86pc
+Reading specs from /usr/local/lib/gcc-lib/i386-pc-solaris2.8/2.95.3/specs
+gcc version 2.95.3 20010315 (release)
+bash-2.03#
+
+위의 코드를 컴파일 하여 백그라운드로 실행하면서 vmstat 명령을 이용, 
+메모리 할당 부분에 대해서 알아보았다.
+
+bash-2.03# cc -o free free.c
+bash-2.03# ./free &
+[1] 18777
+bash-2.03# vmstat 1
+ procs     memory            page            disk          faults      cpu
+ r b w   swap  free  re  mf pi po fr de sr cd -- -- --   in   sy   cs us sy id
+ 0 0 0 1270732 247888 29 247 4  0  0  0  0  1  0  0  0  131 1368  306  5  3 92
+ 0 0 0 1269968 239636 59 515 0  0  0  0  0  0  0  0  0  121 2540  553  8  7 85
+ 0 0 0 1269968 239616 59 509 0  0  0  0  0  0  0  0  0  124 2485  543  8  6 86
+Executed malloc function. (in main function. 15 line)
+ 0 0 0 1269968 239600 59 516 0  0  0  0  0  0  0  0  0  119 2487  539  9  5 86
+ 0 0 0 221380 239580 59 508  0  0  0  0  0  0  0  0  0  123 2480  543  8  6 86
+ 0 0 0 221380 239564 59 508  0  0  0  0  0  0  0  0  0  122 2476  540 10  4 86
+ 0 0 0 221380 239552 59 508  0  0  0  0  0  0  0  0  0  120 2488  546  9  5 86
+ 0 0 0 221380 239540 59 508  0  0  0  0  0  0  0  0  0  118 2472  534 10  4 86
+Executed free function. (in main function. 18 line)
+ 0 0 0 221380 239528 59 508  0  0  0  0  0  0  0  0  0  123 2487  542  9  6 85
+ 0 0 0 221380 239608 59 508  0  0  0  0  0  0  0  0  0  120 2484  540  8  6 86
+ 0 0 0 221380 239596 59 508  0  0  0  0  0  0  0  0  0  118 2474  538  9  5 86
+ 0 0 0 221380 239584 59 508  0  0  0  0  0  0  0  0  0  124 2495  548  8  6 86
+ 0 0 0 221380 239568 59 508  0  0  0  0  0  0  0  0  0  121 2483  543  9  5 86
+Executed exit function. (in main function. 21 line)
+ 0 0 0 221380 239556 59 508  0  0  0  0  0  0  0  0  0  122 2474  534  8  6 86
+ 0 0 0 1270024 239624 59 508 0  0  0  0  0  0  0  0  0  122 2479  542 11  3 86
+ 0 0 0 1270024 239612 59 508 0  0  0  0  0  0  0  0  0  118 2469  534  6  8 86
+ 0 0 0 1270024 239600 59 508 0  0  0  0  0  0  0  0  0  118 2513  543  7  7 86
+^C
+[1]+  Done                    ./free
+bash-2.03#
+
+실제적으로 free() 함수로 동적메모리 할당을 해제했다고 하더라도
+어플리케이션 단위에서는 해당 메모리를 그대로 가지고 있는것으로 나타났다.
+
+같은 코드를 가지고 RedHat linux 배포판에서 test 를 해보았다.
+OS 환경은 RH 8.0,
+gcc 버전은 3.2(20020903 release) 버전이다.
+
+indra@ ~test> ./free &
+[1] 25255
+indra@ ~test> while :; do ps -aux | grep "./free"; sleep 1 ; done
+indra    25255  0.0  0.0  1308  216 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.0  1308  216 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.0  1308  216 pts/5    S    13:07   0:00 ./free
+Executed malloc function. (in main function. 15 line)
+indra    25255  0.0  0.1 1049892 312 pts/5   S    13:07   0:00 ./free
+indra    25255  0.0  0.1 1049892 312 pts/5   S    13:07   0:00 ./free
+indra    25255  0.0  0.1 1049892 312 pts/5   S    13:07   0:00 ./free
+indra    25255  0.0  0.1 1049892 312 pts/5   S    13:07   0:00 ./free
+Executed free function. (in main function. 18 line)
+indra    25255  0.0  0.1  1312  308 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.1  1312  308 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.1  1312  308 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.1  1312  308 pts/5    S    13:07   0:00 ./free
+indra    25255  0.0  0.1  1312  308 pts/5    S    13:07   0:00 ./free
+Executed exit function. (in main function. 21 line)
+[1]+  Done                    ./free
+^C
+
+indra@ ~test>
+
+SunOS 에서의 메모리 관리가 user 의 눈으로 보이는것만 다른것인지
+아니면 실제 free() 후 메모리 관리가 효율성을 위한 측면으로 다른 OS 와
+관리체계가 다른지는 아직까지 불 분명 하다.
+
+이에 대한 yundream 님의 답변:
+
+------------------------------------------------------
+http://www.joinc.co.kr/modules.php?op=modload&name=Forum&file=viewtopic&topic=28365&forum=1&2
+
+솔라리스 운영체제에서 테스트 한거 아닙니까 ? 
+리눅스상에서는 free 했을경우 제대로 해제가 되는데, 
+솔라리스에서는 해제가 안되더군요. 
+정확히 말하면 안되는것처럼 보인다고 해야 정확한 표현일듯 싶은데, 
+
+저도 예전에 솔라에서 작업하다가, 
+malloc 후 free 가 안되는 문제로 꽤 고민을 한적이 있었습니다. 
+몇몇 문서를 찾아봤더니, 메모리관련작업 안정성을 확보하기 위해서라고 되어 있는것 같기는 하던데 
+확실히는 잘 모르겠습니다. 
+
+어쨋든 저것때문에 메모리 누수와 같은 문제가 
+발생하지 않습니다. 
+솔라에서 메모리관리를 어떻게 하는지좀 알아봐야 겠네요. 
+
+저문제로 가끔 짜증날때가 있는데, 
+어떤 이유로 일시적으로 한 100메가 이상 메모리를 잡아서 쓰게되었다면 free를 해도 ps 상에서는 
+100메가를 그대로 잡고 있는걸로 보이기 때문에, 
+프로그래머 입장에서는 문제가 되지 않겠지만, 
+가끔 고객에게 프로그램을 제공할때 문제가 될수도 있죠. 
+"왜 이렇게 메모리를 많이 잡아먹어요? 문제 있는거 아닌가요?" 
+이런 문제가 발생할수 있습니다. 
+설명을 해도 쉽게 납득을 하지 못하죠.
+------------------------------------------------------
+
+마지막으로 realloc() 을 통한 메모리 재 할당을 test 하여 보았다.
+linux 에서는 realloc() 을 사용시, 메모리 사이즈가 재 설정되는 양상을
+보였지만 SunOS 에서는 역시 처음 malloc() 으로 할당된 메모리 사이즈를
+유지하고 있었다.
+
+-------------------------------- [ test_code2.c ]
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX     (1024*1024)*1024
+#define ALERT(funct, funct2, line) { \
+        printf("Executed %s function. (in %s function. %d line)\n", \
+        funct, funct2, line); \
+}
+
+int main()
+{
+        char *buf;
+
+        sleep(5);
+        ALERT("malloc", __FUNCTION__, __LINE__);
+        buf = (char*)malloc(MAX);
+        sleep(5);
+        ALERT("realloc", __FUNCTION__, __LINE__);
+        buf = (char*)realloc(buf, 1024*1024);
+        sleep(5);
+        ALERT("free", __FUNCTION__, __LINE__);
+        free(buf);
+        sleep(5);
+        ALERT("exit", __FUNCTION__, __LINE__);
+        exit(0);
+}
+
+-------------------------------- [ test_code2.c ]
+
+indra@ ~test> ./free &
+[1] 25389
+indra@ ~test> while :; do ps -aux | grep "./free"; sleep 1 ; done
+indra    25389  0.0  0.0  1308  216 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.0  1308  216 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.0  1308  216 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.0  1308  216 pts/5    S    13:29   0:00 ./free
+Executed malloc function. (in main function. 15 line)
+indra    25389  0.0  0.1 1049892 312 pts/5   S    13:29   0:00 ./free
+indra    25389  0.0  0.1 1049892 312 pts/5   S    13:29   0:00 ./free
+indra    25389  0.0  0.1 1049892 312 pts/5   S    13:29   0:00 ./free
+indra    25389  0.0  0.1 1049892 312 pts/5   S    13:29   0:00 ./free
+Executed realloc function. (in main function. 18 line)
+indra    25389  0.0  0.1  2340  316 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  2340  316 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  2340  316 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  2340  316 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  2340  316 pts/5    S    13:29   0:00 ./free
+Executed free function. (in main function. 21 line)
+indra    25389  0.0  0.1  1312  312 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  1312  312 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  1312  312 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  1312  312 pts/5    S    13:29   0:00 ./free
+indra    25389  0.0  0.1  1312  312 pts/5    S    13:29   0:00 ./free
+Executed exit function. (in main function. 24 line)
+[1]+  Done                    ./free
+^C
+indra@ ~test>
+

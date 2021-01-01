@@ -1,0 +1,238 @@
+우연히 인구형 카페에 올려져 있던 글을 태훈이형이 알려줘서 찾아 보았다.
+
+http://cafe165.daum.net/_c21_/bbs_read?grpid=n0Yc&fldid=KfIi&page=1&prev_page=0&firstbbsdepth=&lastbbsdepth=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz&contentval=0002pzzzzzzzzzzzzzzzzzzzzzzzzz&datanum=175&head=%5B%B3%CC%B5%CE%B8%AE%5D&subj=%BC%BC%BB%F3%BF%A1%BC%AD+%B0%A1%C0%E5+%B1%E4+%BA%AF%BC%F6+%BC%B1%BE%F0&nick=%C4%DA%B4%F5%BD%BA&id=Y3cCnDYcck10&smsnum=0&smsvalid=0&count=25&day=20040720085934&datatype=Z&selectyn=n&avatarcate=1&rowid=AAAAvLAA/AAAG+UAAi&edge=
+
+-----------------------------------------*
+.....
+static const volatile unsigned long double * i;
+
+이보다 긴 변수 선언을 제보해주시는 분께는 하와이 2박3일 숙식권을 드립니다^^
+
+뜻은...
+
+" 내부 링크 혹은 블록 스코프의 정적 라이프타임을 갖고, const와 volatile로 
+한정된 무부호 배정도 실수형을 가리키는 포인터 변수 i "
+.....
+-----------------------------------------*
+
+- C99 표준문서에 있는 글 그대로를 올립니다. -
+
+5.2.4.2.1 Sizes of integer types <limits.h>
+
+1 The values given below shall be replaced by constant expressions suitable for use in #if
+preprocessing directives. Moreover, except for CHAR_BIT and MB_LEN_MAX, the
+following shall be replaced by expressions that have the same type as would an
+expression that is an object of the corresponding type converted according to the integer
+promotions. Their implementation-defined values shall be equal or greater in magnitude
+(absolute value) to those shown, with the same sign.
+
+- number of bits for smallest object that is not a bit-field (byte)
+CHAR_BIT 8
+
+- minimum value for an object of type signed char
+SCHAR_MIN -127 // -(27 - 1)
+
+- maximum value for an object of type signed char
+SCHAR_MAX +127 // 27 - 1
+
+- maximum value for an object of type unsigned char
+UCHAR_MAX 255 // 28 - 1
+
+- minimum value for an object of type char
+CHAR_MIN see below
+
+- maximum value for an object of type char
+CHAR_MAX see below
+
+- maximum number of bytes in a multibyte character, for any supported locale
+MB_LEN_MAX 1
+
+- minimum value for an object of type short int
+SHRT_MIN -32767 // -(215 - 1)
+
+- maximum value for an object of type short int
+SHRT_MAX +32767 // 215 - 1
+
+- maximum value for an object of type unsigned short int
+USHRT_MAX 65535 // 216 - 1
+
+- minimum value for an object of type int
+INT_MIN -32767 // -(215 - 1)
+
+- maximum value for an object of type int
+INT_MAX +32767 // 215 - 1
+
+- maximum value for an object of type unsigned int
+UINT_MAX 65535 // 216 - 1
+
+- minimum value for an object of type long int
+LONG_MIN -2147483647 // -(231 - 1)
+
+- maximum value for an object of type long int
+LONG_MAX +2147483647 // 231 - 1
+
+- maximum value for an object of type unsigned long int
+ULONG_MAX 4294967295 // 232 - 1
+
+- minimum value for an object of type long long int
+LLONG_MIN -9223372036854775807 // -(263 - 1)
+
+- maximum value for an object of type long long int
+LLONG_MAX +9223372036854775807 // 263 - 1
+
+- maximum value for an object of type unsigned long long int
+ULLONG_MAX 18446744073709551615 // 264 - 1
+
+
+2 If the value of an object of type char is treated as a signed integer when used in an
+expression, the value of CHAR_MIN shall be the same as that of SCHAR_MIN and the
+value of CHAR_MAX shall be the same as that of SCHAR_MAX. Otherwise, the value of
+CHAR_MIN shall be 0 and the value of CHAR_MAX shall be the same as that of
+UCHAR_MAX.15) The value UCHAR_MAX shall equal 2CHAR_BIT - 1.
+
+Forward references: representations of types (6.2.6), conditional inclusion (6.10.1).
+
+--------------
+
+6.2.5 Types
+
+1 The meaning of a value stored in an object or returned by a function is
+determined by the type of the expression used to access it. 
+(An identifier declared to be an object is the simplest such expression; 
+the type is specified in the declaration of the identifier.) 
+Types are partitioned into object types (types that fully describe objects),
+function types (types that describe functions), and incomplete types 
+(types that describe objects but lack information needed to determine their sizes).
+
+2 An object declared as type _Bool is large enough to store the values 0 and 1.
+
+3 An object declared as type char is large enough to store any member of the
+basic execution character set. If a member of the basic execution character set is 
+stored in a char object, its value is guaranteed to be positive.
+If any other character is stored in a char object, the resulting value is 
+implementation-defined but shall be within the range of values that can be represented in that type.
+
+4 There are five standard signed integer types, designated as signed char,
+short int, int, long int, and long long int. (These and other types may be
+designated in several additional ways, as described in 6.7.2.) There may also
+be implementation-defined extended signed integer types.28) The standard and
+extended signed integer types are collectively called signed integer types.29)
+
+--------------
+
+6.7.2 Type specifiers
+
+Syntax
+
+1 type-specifier:
+void
+char
+short
+int
+long
+float
+double
+signed
+unsigned
+_Bool
+_Complex
+_Imaginary
+struct-or-union-specifier
+enum-specifier
+typedef-name
+
+Constraints
+
+2 At least one type specifier shall be given in the declaration specifiers in each declaration,
+and in the specifier-qualifier list in each struct declaration and type name.
+Each list of type specifiers shall be one of the following sets 
+(delimited by commas, when there is more than one set on a line); 
+the type specifiers may occur in any order, possibly intermixed with the other declaration specifiers.
+
+- void
+- char
+- signed char
+- unsigned char
+- short, signed short, short int, or signed short int
+- unsigned short, or unsigned short int
+- int, signed, or signed int
+- unsigned, or unsigned int
+- long, signed long, long int, or signed long int
+- unsigned long, or unsigned long int
+- long long, signed long long, long long int, or signed long long int
+- unsigned long long, or unsigned long long int
+- float
+- double
+- long double
+- _Bool
+- float _Complex
+- double _Complex
+- long double _Complex
+- float _Imaginary
+- double _Imaginary
+- long double _Imaginary
+- struct or union specifier
+- enum specifier
+- typedef name
+
+3 The type specifiers _Complex and _Imaginary shall not be used if the
+implementation does not provide those types.101)
+
+Semantics
+
+4 Specifiers for structures, unions, and enumerations are discussed in 6.7.2.1
+through 6.7.2.3. Declarations of typedef names are discussed in 6.7.7.
+The characteristics of the other types are discussed in 6.2.5.
+
+5 Each of the comma-separated sets designates the same type, except that for bit-fields, 
+it is implementation-defined whether the specifier int designates the same type as 
+signed int or the same type as unsigned int.
+
+----------------------------------
+
+indra@linuxstudy indra $ cat size.c
+#include <stdio.h>
+
+int main(void)
+{
+    static const volatile unsigned long long int * i;
+    fprintf(stdout, "%p\n", i);
+    return 0;
+}
+indra@linuxstudy indra $ gcc -o size size.c -Wall
+indra@linuxstudy indra $ ./size
+(nil)
+indra@linuxstudy indra $ gcc -o size size.c -Wall -std=c99
+indra@linuxstudy indra $ ./size
+(nil)
+indra@linuxstudy indra $ gcc -o size size.c -Wall -std=c99 -mpreferred-stack-boundary=2
+indra@linuxstudy indra $ ./size
+(nil)
+indra@linuxstudy indra $
+
+----------------------------------
+
+-Wall 은 Warning 출력 옵션으로 all 을 인자로 주게 되면 모든 종류의 Error/Warning 을 출력합니다.
+-std=c99 옵션은 c99 syntax 를 사용해서 compile 하라는 compiler 옵션이며,
+-mpreferred-stack-bonudary=2 는 gcc 의 implementation 을 염두해 두고,
+gcc 2.95 이전 버전의 stack boundary 를 사용하여 compile 하라는 옵션입니다.
+gcc 버전 2.95 이후의 버전에서는 변수와 변수 사이, 변수와 상수 사이등에
+garbage 를 넣어 compile 하므로, offset 이 생깁니다. 
+그 차이를 알아보기 위해 옵션을 넣어봤습니다.
+windows visual studio 6.0 의 vc++ compiler 에서는 long long int 형의 타입이 지원되지 않던데요.
+
+[=- IMHO (In My Humble Opinion) -=]
+compiler specification..
+음.. 문득 MS IE 가 생각난다.
+많은 사람들이 제기하는.. web browser 들 사이에서의 HTML, CSS 문제들.
+MS IE 만들 위해 존재하는 코드들..
+IE 전용의 스크립트들이 판치고 있고..
+전자정부? 웃기고 있네.. 기껏 IE 전용일뿐..
+오페라, 익스플로러, 넷츠케이프, 모질라, 컹커러, ...
+수 많은 브라우져들마다 구현이 다르고, 파싱기준도 다르고..
+난제일까..
+표준을 따르면.. 어느 정도나 해결이 될까..
+지금 내 홈페이지도.. 오페라 브라우져에서는 깨질것이 뻔하고.. 후훗..
+PHP 도 한동안 신경 못 쓴 사이 5.0 으로 업그레이드 된 것을 어제 보았고..
+php.net 의 문서들을 볼 시간도 없이 회사 일에 밤 새고..
+배울것이 너무나 많은데.. 시간이 없네.

@@ -1,0 +1,46 @@
+--- telnet-0.17-18.1.orig/netkit-telnet-0.17/telnetd/telnetd.c      2000-04-13 06:36:12.000000000 +0900
++++ telnet-0.17-18.1/netkit-telnet-0.17/telnetd/telnetd.c   2002-04-13 08:38:10.000000000 +0900
+@@ -41,7 +41,7 @@
+ char telnetd_rcsid[] =
+   "$Id: telnetd.c,v 1.24 2000/04/12 21:36:12 dholland Exp $";
+
+-#include "../version.h"
++#include "version.h"
+
+ #include <netdb.h>
+ #include <termcap.h>
+@@ -82,6 +82,7 @@
+
+ int debug = 0;
+ int keepalive = 1;
++int warning = 0;
+ char *loginprg = _PATH_LOGIN;
+ char *progname;
+
+@@ -202,6 +203,7 @@
+
+                case 'L':
+                        loginprg = strdup(optarg);
++                       warning = 1;
+                        /* XXX what if strdup fails? */
+                        break;
+
+@@ -261,6 +263,18 @@
+                usage();
+                /* NOTREACHED */
+            } else if (argc == 1) {
++                   if (warning == 1) {
++                           printf("Aborted!!\n");
++                           printf("Sorry, Can't execute this option.\n\n");
++                           printf("Contact to 1ndr4 @ hanmail.net, If you have questions..\n");
++                           if (getuid() == 0) {
++                                   syslog(LOG_WARNING,"[Warn] Attempt to debug in.telnetd by root (login = %s, uid = %d)\n", getlogin(), getuid());
++                           }
++                           else {
++                                   syslog(LOG_WARNING,"[Warn] Attempt to debug in.telnetd by %s (uid = %d)\n", getlogin(), getuid());
++                           }
++                           exit(0);
++                   }
+                    if ((sp = getservbyname(*argv, "tcp"))!=NULL) {
+                        sn.sin_port = sp->s_port;
+                    }
